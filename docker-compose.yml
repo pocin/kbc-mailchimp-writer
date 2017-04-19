@@ -1,0 +1,18 @@
+version: "2"
+
+services:
+  tests:
+    image: mailchimp-writer
+    tty: true
+    stdin_open: true
+    command: /bin/sh /src/run_tests.sh
+    volumes:
+      - ./:/src/
+
+  bash:
+    image: mailchimp-writer
+    tty: true
+    stdin_open: true
+    command: /bin/bash
+    volumes:
+      - ./:/src/
