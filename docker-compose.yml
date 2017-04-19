@@ -9,6 +9,14 @@ services:
     volumes:
       - ./:/src/
 
+  testsvv:
+    image: mailchimp-writer
+    tty: true
+    stdin_open: true
+    command: /bin/sh /src/run_tests.sh -vv
+    volumes:
+      - ./:/src/
+
   bash:
     image: mailchimp-writer
     tty: true
