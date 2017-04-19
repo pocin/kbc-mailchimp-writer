@@ -1,7 +1,8 @@
 import pytest
 from tempfile import NamedTemporaryFile
 from mcwriter.utils import (serialize_dotted_path_dict,
-                            serialize_new_lists_input)
+                            serialize_new_lists_input,
+                            prepare_batch_data)
 
 
 def test_serializing_new_lists():
@@ -39,3 +40,23 @@ Max,BarBar,Slovakia,False''')
 
     assert expected[0] == serialized[0]
     assert expected[1] == serialized[1]
+
+
+def test_preparing_batch_data():
+    template = {
+        'method': 'POST',
+        'path': '/lists',
+        'body': None}
+
+    data = [{'foo':'bar', 'baz':'qux'},
+            {'foo':'bar2', 'baz': 'quxx'}]
+
+    batch_data = prepare_batch_data(template, data)
+
+    expected = [{'method': 'POST',
+                 'path': '/lists',
+                 'body': {'foo':'bar', 'baz':'qux'}},
+                {'method': 'POST',
+                 'path': '/lists',
+                 'body': {'foo':'bar2', 'baz': 'quxx'}}]
+    assert batch_data == expected

@@ -46,3 +46,26 @@ def serialize_new_lists_input(path):
             serialized_line = serialize_dotted_path_dict(line)
             serialized.append(serialized_line)
     return serialized
+
+def prepare_batch_data(template, serialized_data):
+    """Prepare data for batch operation
+
+    When submitting batch operation, the data should contain the target for the
+    request (the template), a request method and the payload. This function
+    copies the data into the template for each datadict
+
+    Args:
+        template (dict): common data for all operations (method, path)
+        serialized_data (lists): a list structures (dicts) containing the
+            payload
+
+    """
+    operations = []
+
+    for data in serialized_data:
+        temp = template.copy()
+        temp['body'] = data
+        operations.append(temp)
+
+    return operations
+
