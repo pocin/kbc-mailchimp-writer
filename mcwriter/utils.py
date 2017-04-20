@@ -24,11 +24,28 @@ def serialize_dotted_path_dict(flat_data):
     serialized = defaultdict(dict)
 
     for key, value in flat_data.items():
+        try:
+            # The csv can contain a number, True/False, or None (if empty)
+            value_clean = value.lower()
+        except AttributeError:
+            value_clean = value
         if '.' in key:
             lvl1, lvl2 = key.split('.', maxsplit=1)
-            serialized[lvl1][lvl2] = value
+            if value_clean == 'false':
+                serialized[lvl1][lvl2] = False
+            elif value_clean == 'true':
+                serialized[lvl1][lvl2] = True
+            else:
+                serialized[lvl1][lvl2] = value
+
         else:
-            serialized[key] = value
+            if value_clean == 'false':
+                serialized[key] = False
+            elif value_clean == 'true':
+                serialized[key] = True
+            else:
+                serialized[key] = value
+
     return serialized
 
 def serialize_new_lists_input(path):
