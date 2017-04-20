@@ -84,5 +84,5 @@ def prepare_batch_data(template, serialized_data):
         temp['body'] = data
         operations.append(temp)
 
-    return operations
+    return {'operations': operations}
 

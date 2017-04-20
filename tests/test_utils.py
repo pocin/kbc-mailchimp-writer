@@ -80,10 +80,12 @@ def test_preparing_batch_data():
 
     batch_data = prepare_batch_data(template, data)
 
-    expected = [{'method': 'POST',
-                 'path': '/lists',
-                 'body': {'foo':'bar', 'baz':'qux'}},
-                {'method': 'POST',
-                 'path': '/lists',
-                 'body': {'foo':'bar2', 'baz': 'quxx'}}]
+    expected = {'operations': [
+        {'method': 'POST',
+         'path': '/lists',
+         'body': {'foo':'bar', 'baz':'qux'}},
+        {'method': 'POST',
+         'path': '/lists',
+         'body': {'foo':'bar2', 'baz': 'quxx'}}
+    ]}
     assert batch_data == expected
