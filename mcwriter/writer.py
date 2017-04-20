@@ -6,10 +6,12 @@ Keboola mailchimp writer
 
 import sys
 import logging
+import datetime
 from keboola import docker
 from mailchimp3 import MailChimp
 from requests import HTTPError
-import csv
+from .utils import (serialize_new_lists_input,
+                    prepare_batch_data)
 
 # valid fields for creating mailing list according to
 # https://us1.api.mailchimp.com/schema/3.0/Definitions/Lists/POST.json
@@ -77,15 +79,33 @@ def show_lists(client):
     pass
 
 
-def create_list():
-    """Create new mailing list"""
-    logging.debug("Creating new lists defined in {}".format(PATH_NEW_LISTS))
-    with open(PATH_NEW_LISTS, 'r') as lists:
-        reader = csv.DictReader(lists)
-        for line in reader:
-            serialized = 
+def create_lists(client, csv_lists=PATH_NEW_LISTS, batch=False):
+    """Create new mailing list """
+    serialized_data = serialize_new_lists_input(csv_lists)
+    logging.debug("Creating {count} new lists defined in {path}".format(
+        count=len(serialized_data),
+        path=csv_lists))
+
+    if batch or len(serialized_data) > 5:
+        operation_id = 'batch_create_lists_{:%Y%m%d:%H-%M-%S}'.format(
+            datetime.datetime.now())
+        logging.debug('Creating lists in batch mode: operation_id {}'.format(
+            operation_id))
+        operation_template = {
+            'method': 'POST',
+            'path': '/lists',
+            'operation_id': operation_id,
+            'body': None}
+
+        operations = prepare_batch_data(operation_template, serialized_data)
+        client.batches.create(data=operations)
+    else:
+        logging.debug('Creating lists in serial.')
+        for data in serialized_data:
+            client.lists.create(data=data)
+    logging.info("New lists created.")
+
 
 def update_list():
     """Update existing mailing list"""
     pass
-
