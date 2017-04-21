@@ -93,7 +93,6 @@ def _create_lists_in_batch(client, serialized_data):
     operations = prepare_batch_data(operation_template, serialized_data)
     try:
         response = client.batches.create(data=operations)
-        logging.debug("batch_id = %s", json.loads(response.text))
     except HTTPError as exc:
         err_resp = json.loads(exc.response.text)
         logging.error("Error while creating request:\n%s\nAborting.", err_resp)
