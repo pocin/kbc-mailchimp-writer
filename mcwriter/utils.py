@@ -81,7 +81,7 @@ def prepare_batch_data(template, serialized_data):
 
     for data in serialized_data:
         temp = template.copy()
-        temp['body'] = data
+        temp['body'] = json.dumps(data)
         operations.append(temp)
 
     return {'operations': operations}

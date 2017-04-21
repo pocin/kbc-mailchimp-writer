@@ -1,4 +1,5 @@
 import pytest
+import json
 from tempfile import NamedTemporaryFile
 from mcwriter.utils import (serialize_dotted_path_dict,
                             serialize_new_lists_input,
@@ -83,9 +84,9 @@ def test_preparing_batch_data():
     expected = {'operations': [
         {'method': 'POST',
          'path': '/lists',
-         'body': {'foo':'bar', 'baz':'qux'}},
+         'body': json.dumps({'foo':'bar', 'baz':'qux'})},
         {'method': 'POST',
          'path': '/lists',
-         'body': {'foo':'bar2', 'baz': 'quxx'}}
+         'body': json.dumps({'foo':'bar2', 'baz': 'quxx'})}
     ]}
     assert batch_data == expected
