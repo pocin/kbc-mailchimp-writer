@@ -8,6 +8,7 @@ import sys
 import logging
 import datetime
 import json
+import time
 from keboola import docker
 from mailchimp3 import MailChimp
 from requests import HTTPError
@@ -18,6 +19,7 @@ from .utils import (serialize_lists_input,
 # https://us1.api.mailchimp.com/schema/3.0/Definitions/Lists/POST.json
 # http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists
 PATH_NEW_LISTS = '/data/in/tables/new_lists.csv'
+PATH_UPDATE_LISTS = '/data/in/tables/update_lists.csv'
 BATCH_THRESHOLD = 3 # When to switch from serial jobs to batch jobs
 
 LISTS_VALID_FIELDS = ["name",
@@ -126,6 +128,30 @@ def create_lists(client, csv_lists=PATH_NEW_LISTS, batch=False):
     logging.info("New lists created.")
 
 
-def update_lists():
-    """Update existing mailing list"""
-    pass
+def update_lists(client, csv_lists=PATH_UPDATE_LISTS):
+    """Update existing mailing lists
+
+    the input csv file should have the same structure as for lists creation
+    with an additional column `list_id` used to reference existing lists.
+    """
+    serialized_data = serialize_lists_input(csv_lists)
+    logging.debug("Updating %d new lists defined in %s", len(serialized_data), csv_lists)
+    _update_lists_serial(client=client, serialized_data=serialized_data)
+    logging.info("Lists updated.")
+
+    # TODO add batch operations maybe?
+
+def _update_lists_serial(client, serialized_data):
+    for data in serialized_data:
+        list_id = data.pop('list_id')
+        try:
+            client.lists.update(list_id=list_id, data=data)
+        except HTTPError as exc:
+            err_resp = json.loads(exc.response.text)
+            logging.error("Error while creating request:\n"
+                          "POST data:\n%s"
+                          "Error message\n%s", data, err_resp)
+            sys.exit(1)
+        time.sleep(0.2)
+
+    logging.info("")
