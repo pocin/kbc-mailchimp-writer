@@ -98,11 +98,23 @@ def create_lists(client, csv_lists=PATH_NEW_LISTS, batch=False):
             'body': None}
 
         operations = prepare_batch_data(operation_template, serialized_data)
-        client.batches.create(data=operations)
+        try:
+            client.batches.create(data=operations)
+        except HTTPError as e:
+            err_resp = json.loads(e.response.text)
+            logging.error("Error while creating request:\n{}\nAborting.".format(err_resp))
+            sys.exit(1)
     else:
         logging.debug('Creating lists in serial.')
         for data in serialized_data:
-            client.lists.create(data=data)
+            try:
+                client.lists.create(data=data)
+            except HTTPError as e:
+                err_resp = json.loads(e.response.text)
+                logging.error("Error while creating request:\n"
+                              "POST data:\n{}"
+                              "Error message\n{}".format(data, err_resp))
+                sys.exit(1)
     logging.info("New lists created.")
 
 
