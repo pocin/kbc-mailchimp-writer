@@ -18,6 +18,7 @@ from .utils import (serialize_new_lists_input,
 # https://us1.api.mailchimp.com/schema/3.0/Definitions/Lists/POST.json
 # http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists
 PATH_NEW_LISTS = '/data/in/tables/new_lists.csv'
+BATCH_THRESHOLD = 3 # When to switch from serial jobs to batch jobs
 
 LISTS_VALID_FIELDS = ["name",
                       "contact.company", "contact.address1", "contact.address2",
@@ -75,47 +76,49 @@ def _setup_client(params):
         logging.info("Credentials OK")
         return client
 
-def show_lists(client):
+def show_lists():
     """Show existing mailing lists"""
     pass
 
+def _create_lists_in_batch(client, serialized_data):
+    operation_id = 'create_lists_{:%Y%m%d:%H-%M-%S}'.format(
+        datetime.datetime.now())
+    logging.debug('Creating lists in batch mode: operation_id %s', operation_id)
+    operation_template = {
+        'method': 'POST',
+        'path': '/lists',
+        'operation_id': operation_id,
+        'body': None}
+
+    operations = prepare_batch_data(operation_template, serialized_data)
+    try:
+        response = client.batches.create(data=operations)
+        logging.debug("batch_id = %s", json.loads(response.text))
+    except HTTPError as exc:
+        err_resp = json.loads(exc.response.text)
+        logging.error("Error while creating request:\n%s\nAborting.", err_resp)
+        sys.exit(1)
+
+def _create_lists_serial(client, serialized_data):
+    logging.debug('Creating lists in serial.')
+    for data in serialized_data:
+        try:
+            client.lists.create(data=data)
+        except HTTPError as exc:
+            err_resp = json.loads(exc.response.text)
+            logging.error("Error while creating request:\n"
+                          "POST data:\n%s"
+                          "Error message\n%s", data, err_resp)
+            sys.exit(1)
 
 def create_lists(client, csv_lists=PATH_NEW_LISTS, batch=False):
     """Create new mailing list """
     serialized_data = serialize_new_lists_input(csv_lists)
-    logging.debug("Creating {count} new lists defined in {path}".format(
-        count=len(serialized_data),
-        path=csv_lists))
-
-    if batch or len(serialized_data) > 5:
-        operation_id = 'batch_create_lists_{:%Y%m%d:%H-%M-%S}'.format(
-            datetime.datetime.now())
-        logging.debug('Creating lists in batch mode: operation_id {}'.format(
-            operation_id))
-        operation_template = {
-            'method': 'POST',
-            'path': '/lists',
-            'operation_id': operation_id,
-            'body': None}
-
-        operations = prepare_batch_data(operation_template, serialized_data)
-        try:
-            client.batches.create(data=operations)
-        except HTTPError as e:
-            err_resp = json.loads(e.response.text)
-            logging.error("Error while creating request:\n{}\nAborting.".format(err_resp))
-            sys.exit(1)
+    logging.debug("Creating %d new lists defined in %s", len(serialized_data), csv_lists)
+    if batch or len(serialized_data) > BATCH_THRESHOLD:
+        _create_lists_in_batch(client=client, serialized_data=serialized_data)
     else:
-        logging.debug('Creating lists in serial.')
-        for data in serialized_data:
-            try:
-                client.lists.create(data=data)
-            except HTTPError as e:
-                err_resp = json.loads(e.response.text)
-                logging.error("Error while creating request:\n"
-                              "POST data:\n{}"
-                              "Error message\n{}".format(data, err_resp))
-                sys.exit(1)
+        _create_lists_serial(client=client, serialized_data=serialized_data)
     logging.info("New lists created.")
 
 
