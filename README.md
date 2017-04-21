@@ -44,3 +44,5 @@ these columns can be used to create a mailing list:
 Each keyword should be a column name in the `new_lists.csv` input file ([see the template](./templates/new_lists.csv)). Each row represents a new mailing list.
 
 Fields marked with `*` are required. Strings can be empty `''`. Boolean values must be either `true` or `false` (empty string is treaded as `false`). You can completely left out the non-mandatory columns from the csv.
+
+## Updating of existing mailing lists

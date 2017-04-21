@@ -11,7 +11,7 @@ import json
 from keboola import docker
 from mailchimp3 import MailChimp
 from requests import HTTPError
-from .utils import (serialize_new_lists_input,
+from .utils import (serialize_lists_input,
                     prepare_batch_data)
 
 # valid fields for creating mailing list according to
@@ -115,7 +115,7 @@ def _create_lists_serial(client, serialized_data):
 
 def create_lists(client, csv_lists=PATH_NEW_LISTS, batch=False):
     """Create new mailing list """
-    serialized_data = serialize_new_lists_input(csv_lists)
+    serialized_data = serialize_lists_input(csv_lists)
     logging.debug("Creating %d new lists defined in %s", len(serialized_data), csv_lists)
     if batch or len(serialized_data) > BATCH_THRESHOLD:
         batch_response = _create_lists_in_batch(client=client, serialized_data=serialized_data)
@@ -126,6 +126,6 @@ def create_lists(client, csv_lists=PATH_NEW_LISTS, batch=False):
     logging.info("New lists created.")
 
 
-def update_list():
+def update_lists():
     """Update existing mailing list"""
     pass

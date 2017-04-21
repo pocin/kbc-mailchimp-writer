@@ -175,7 +175,7 @@ def _clean_optional_custom_fields(one_list):
     return one_list
 
 
-def serialize_new_lists_input(path):
+def serialize_lists_input(path):
     """Parse the inputs csvfile containing details on new mailing lists
 
     Arguments:

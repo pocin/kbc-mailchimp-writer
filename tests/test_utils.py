@@ -2,7 +2,7 @@ import pytest
 import json
 from tempfile import NamedTemporaryFile
 from mcwriter.utils import (serialize_dotted_path_dict,
-                            serialize_new_lists_input,
+                            serialize_lists_input,
                             prepare_batch_data)
 
 from conftest import new_lists_csv
@@ -25,7 +25,7 @@ def test_serializing_new_lists():
 
 def test_serializing_new_lists_input_csv(new_lists_csv):
     # Fake inputs
-    serialized = serialize_new_lists_input(new_lists_csv.name)
+    serialized = serialize_lists_input(new_lists_csv.name)
 
     expected = [{'campaign_defaults': {'from_email': 'dark_mage001@email.com',
                                        'from_name': 'Albus Dumlbedore',
