@@ -7,6 +7,7 @@ Keboola mailchimp writer
 import sys
 import logging
 import datetime
+import json
 from keboola import docker
 from mailchimp3 import MailChimp
 from requests import HTTPError
