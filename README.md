@@ -19,27 +19,30 @@ The writer enables:
 ## Creation of new mailing lists
 [According to the mailchimp v3 API](http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists),
 [or here](https://us1.api.mailchimp.com/schema/3.0/Definitions/Lists/POST.json)
-these details can be used to create a mailing list:
+these columns can be used to create a mailing list:
 ```python
- "name",
- "contact.company",
- "contact.address1",
- "contact.address2",
- "contact.city",
- "contact.state",
- "contact.zip",
- "contact.country",
- "contact.phone",
- "permission_reminder",
- "use_archive_bar",
- "campaign_defaults.from_name",
- "campaign_defaults.from_email",
- "campaign_defaults.subject",
- "campaign_defaults.language",
- "notify_on_subscribe",
- "notify_on_unsubscribe",
- "email_type_option",
- "visibility"]
+ "name", #*string
+ "contact.company", #*string
+ "contact.address1", #*string
+ "contact.address2", #string
+ "contact.city", #*string
+ "contact.state", #*string
+ "contact.zip", #*string
+ "contact.country", #*string
+ "contact.phone", #string
+ "permission_reminder", #*string
+ "use_archive_bar", #true/false
+ "campaign_defaults.from_name", #*string
+ "campaign_defaults.from_email", #*string
+ "campaign_defaults.subject", #*string
+ "campaign_defaults.language", #*string
+ "notify_on_subscribe", #string
+ "notify_on_unsubscribe", #string
+ "email_type_option", #*true/false
+ "visibility" #pub/prv
 ```
 Each keyword should be a column name in the `new_lists.csv` input file ([see the template](./templates/new_lists.csv)). Each row represents a new mailing list.
+
+Fields marked with `*` are required. Strings can be empty `''`. Boolean values must be either `true` or `false` (no empty strings). You can completely left out the non-mandatory columns from the csv.
+
 
