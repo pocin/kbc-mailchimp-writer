@@ -64,4 +64,5 @@ Members which are already part of given list will be updated
 # TODO ISSUES
 `[]` How to deal with failed inserts (no transactions).
 `[]` Updating or creating members vs. creating
+`[]` Wait for batch job to complete and how to handle problematic cases
 
