@@ -221,10 +221,23 @@ def _clean_members_interests(one_list):
     for field in (f for f in one_list if f.startswith('interests')):
         if not pattern.match(field):
             raise ValueError("'interests' columns must have format 'interests.[0-9a-zA-Z]+'"
-                             "not {}".format(field))
+                             "not '{}'".format(field))
         else:
             interests.append(field)
     return _clean_optional_bool_fields(one_list, interests)
+
+
+def _clean_members_merge_fields(one_list):
+    pattern = re.compile(r'^merge_fields\.\*\|\w+\|\*$')
+    ok_fields = []
+
+    for field in (f for f in one_list if f.startswith('merge_fields')):
+        if not pattern.match(field):
+            raise ValueError("'merge_fields' columns must have format 'merge_fields.*|<tagName>|*'"
+                             "not '{}'".format(field))
+        else:
+            ok_fields.append(field)
+    return _clean_optional_str_fields(one_list, ok_fields)
 
 
 def serialize_lists_input(path):

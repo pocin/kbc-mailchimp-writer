@@ -30,8 +30,8 @@ def client():
 @pytest.fixture
 def new_members_csv():
     inputs = NamedTemporaryFile(delete=False)
-    inputs.write(b'''email_address,vip,interests.1234abc,interests.abc1234,status,email_type_option
-robin@keboola.com,true,true,true,subscribed,true
-foo@bar.com,false,true,false,pending,false''')
+    inputs.write(b'''email_address,vip,interests.1234abc,interests.abc1234,status,email_type_option,merge_fields.*|FNAME|*
+robin@keboola.com,true,true,true,subscribed,true,Robin
+foo@bar.com,false,true,false,pending,false,''')
     inputs.close()
     return inputs

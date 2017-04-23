@@ -3,6 +3,7 @@ import pytest
 from mcwriter.utils import (_clean_mandatory_custom_fields,
                             clean_and_validate_members_data,
                             _clean_members_interests,
+                            _clean_members_merge_fields,
                             members_mandatory_custom_fields)
 
 def test_cleaning_mandatory_custom_fields_raises_if_not_present():
@@ -107,3 +108,28 @@ def test_cleaning_members_interests_raises_on_invalid_interest():
 
     with pytest.raises(ValueError):
         _clean_members_interests(data)
+
+
+def test_cleaning_members_merge_fields_cleans_ok():
+    data = {
+        'email_address': 'robin@keboola.com',
+        'merge_fields.*|FNAME|*': 'Robin',
+        'merge_fields.*|LNAME|*': 'Nemeth',
+    }
+
+    expected = {
+        'email_address': 'robin@keboola.com',
+        'merge_fields.*|FNAME|*': 'Robin',
+        'merge_fields.*|LNAME|*': 'Nemeth',
+    }
+    assert _clean_members_merge_fields(data) == expected
+
+
+def test_cleaning_members_merge_fields_raises_on_invalid_syntax():
+    data = {
+        'email_address': 'robin@keboola.com',
+        'merge_fields.*|FNAME*|': 'Robin',
+    }
+
+    with pytest.raises(ValueError):
+        _clean_members_merge_fields(data)

@@ -102,14 +102,18 @@ def test_serializing_members_input(new_members_csv):
              '1234abc': True,
              'abc1234': True},
          'status': 'subscribed',
-         'email_type_option': True},
+         'email_type_option': True,
+        'merge_fields': {'*|FNAME|*':'Robin'}
+        },
         {'email_address': 'foo@bar.com',
          'vip': False,
          'interests' : {
              '1234abc': True,
              'abc1234': False},
          'status': 'pending',
-         'email_type_option': False
-        }]
+         'email_type_option': False,
+         'merge_fields': {'*|FNAME|*': ''}
+        }
+    ]
     assert serialized == expected
 
