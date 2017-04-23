@@ -6,6 +6,7 @@ from collections import defaultdict
 import csv
 import json
 import logging
+import re
 
 # fields for adding lists
 lists_mandatory_str_fields = ("name", "contact.company", "contact.address1",
@@ -28,7 +29,7 @@ members_mandatory_custom_fields = {"status": ['subscribed', 'unsubscribed',
                                               'transactional']}
 members_mandatory_bool_fields = ("email_type_option", )
 members_optional_str_fields = ('language', )
-members_optional_bool_fields = ("interests.<interest_id>", "vip" )
+members_optional_bool_fields = ("vip", )
 
 
 def serialize_dotted_path_dict(cleaned_flat_data):
@@ -65,6 +66,18 @@ def clean_and_validate_lists_data(one_list):
         one_list = cleaning_procedure(one_list, fields)
     return one_list
 
+
+def clean_and_validate_members_data(one_list):
+    logging.debug("Cleaning one mailing list data")
+    for cleaning_procedure, fields in (
+            (_clean_optional_str_fields, members_optional_str_fields),
+            (_clean_optional_bool_fields, members_optional_bool_fields),
+            (_clean_mandatory_bool_fields, members_mandatory_bool_fields),
+            (_clean_mandatory_str_fields, members_mandatory_str_fields),
+            (_clean_mandatory_custom_fields, members_mandatory_custom_fields)):
+        one_list = cleaning_procedure(one_list, fields)
+    one_list = _clean_members_interests(one_list)
+    return one_list
 
 
 def _clean_mandatory_str_fields(one_list, fields):
@@ -200,6 +213,18 @@ def _clean_mandatory_custom_fields(one_list, fields):
                                 data=one_list))
     return one_list
 
+
+def _clean_members_interests(one_list):
+    pattern = re.compile(r'^interests\.[0-9a-zA-Z]+$')
+    interests = []
+
+    for field in (f for f in one_list if f.startswith('interests')):
+        if not pattern.match(field):
+            raise ValueError("'interests' columns must have format 'interests.[0-9a-zA-Z]+'"
+                             "not {}".format(field))
+        else:
+            interests.append(field)
+    return _clean_optional_bool_fields(one_list, interests)
 
 
 def serialize_lists_input(path):

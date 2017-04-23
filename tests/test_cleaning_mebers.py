@@ -1,7 +1,8 @@
 import pytest
 
 from mcwriter.utils import (_clean_mandatory_custom_fields,
-                            # clean_and_validate_members_data,
+                            clean_and_validate_members_data,
+                            _clean_members_interests,
                             members_mandatory_custom_fields)
 
 def test_cleaning_mandatory_custom_fields_raises_if_not_present():
@@ -35,3 +36,74 @@ def test_cleaning_mandatory_custom_fields_raises_if_invalid():
 
     with pytest.raises(TypeError):
         _clean_mandatory_custom_fields(data, members_mandatory_custom_fields)
+
+
+def test_cleaning_members_data_all_options_succeeds():
+    data = {
+        'email_address': 'Robin@example.com',
+        'status': 'subscribed',
+        'vip': 'true',
+        'email_type_option': 'true',
+        'language': 'en',
+        'interests.abc1234': 'true',
+        'interests.abc1235': 'false'
+        }
+    expected = {
+        'email_address': 'Robin@example.com',
+        'status': 'subscribed',
+        'vip': True,
+        'email_type_option': True,
+        'language': 'en',
+        'interests.abc1234': True,
+        'interests.abc1235': False,
+        }
+
+    assert clean_and_validate_members_data(data) == expected
+
+def test_cleaning_members_data_all_options_raises_on_invalid_interest_id():
+    data = {
+        'email_address': 'Robin@example.com',
+        'status': 'subscribed',
+        'vip': 'true',
+        'email_type_option': 'true',
+        'language': 'en',
+        'interests.abc1#234': 'true'
+        }
+
+    with pytest.raises(ValueError):
+        clean_and_validate_members_data(data)
+
+def test_cleaning_members_data_all_options_raises_on_missing_email():
+    data = {
+        'status': 'subscribed',
+        'vip': 'true',
+        'email_type_option': 'true',
+        'language': 'en',
+        'interests.abc1#234': 'true'
+        }
+
+    with pytest.raises(KeyError):
+        clean_and_validate_members_data(data)
+
+
+def test_cleaning_members_interests_cleans_ok():
+    data = {
+        'email_address': 'robin@keboola.com',
+        'interests.abc1234': 'true',
+    }
+
+    expected = {
+        'email_address': 'robin@keboola.com',
+        'interests.abc1234': True,
+    }
+    assert _clean_members_interests(data) == expected
+
+
+def test_cleaning_members_interests_raises_on_invalid_interest():
+    data = {
+        'email_address': 'robin@keboola.com',
+        'interests.abc1 234': 'true', # the space is reduntant
+    }
+
+    with pytest.raises(ValueError):
+        _clean_members_interests(data)
