@@ -89,8 +89,8 @@ def _clean_mandatory_str_fields(one_list, fields):
                     field, value, type(value)))
         except KeyError:
             raise KeyError(
-                "Every list must have str %s field. This entry doesnt: %s",
-                field, one_list)
+                "Every list must have str {} field. This entry doesnt: {}".format(
+                field, one_list))
     return one_list
 
 def _clean_optional_str_fields(one_list, fields):
@@ -104,9 +104,9 @@ def _clean_optional_str_fields(one_list, fields):
             if one_list[field] is None:
                 one_list[field] = ''
                 if not isinstance(one_list[field], str):
-                    raise TypeError("The string field {} is non-mandatory,"
+                    raise TypeError("The string field '{}' is non-mandatory,"
                                     " but must be a string if present. "
-                                    "Now it is {} in {}".format(
+                                    "Now it is '{}' in {}".format(
                                         field, type(one_list[field]), one_list))
         except KeyError:
             # Doesnt matter, the optional field isnt there.
@@ -127,8 +127,8 @@ def _clean_mandatory_bool_fields(one_list, fields):
             # python True/False dtypes
             value_clean = one_list[field].lower()
         except KeyError:
-            raise KeyError("Every list must have boolean {} field."
-                           " This entry doesnt: {}".format(field, one_list))
+            raise KeyError("Every list must have boolean '{}' field."
+                           " This entry doesnt: '{}'".format(field, one_list))
         except AttributeError:
             # it is None, True, or False
             one_list[field] = bool(one_list[field])
@@ -173,7 +173,7 @@ def _clean_optional_bool_fields(one_list, fields):
 
 
 def _clean_optional_custom_fields(one_list, fields):
-    """Clean and validate fields
+    """Clean and validate fields. Do not raise if field is not present
 
     Args:
         one_list (dict): one mailing list details in a dict format
@@ -192,7 +192,7 @@ def _clean_optional_custom_fields(one_list, fields):
 
 
 def _clean_mandatory_custom_fields(one_list, fields):
-    """Clean and validate fields
+    """Clean and validate fields. Raise if the field is not present
 
     Args:
         one_list (dict): one mailing list details in a dict format
@@ -202,11 +202,11 @@ def _clean_mandatory_custom_fields(one_list, fields):
         try:
             value = one_list[field]
         except KeyError:
-            raise KeyError("Every member must have boolean {} field. "
+            raise KeyError("Every member must have boolean '{}' field. "
                            "This entry doesnt: {}".format(field, one_list))
         if value not in expected:
-            raise TypeError("The field {field} must be one of "
-                            "{expected}. It is {value} in {data}".format(
+            raise TypeError("The field '{field}' must be one of "
+                            "{expected}. It is '{value}' in {data}".format(
                                 field=field,
                                 expected=expected,
                                 value=value,
@@ -257,6 +257,7 @@ def serialize_lists_input(path):
             serialized.append(serialized_line)
     return serialized
 
+
 def serialize_members_input(path):
     """Parse the members csvfile containing subscribers and lists
 
@@ -296,4 +297,3 @@ def prepare_batch_data(template, serialized_data):
         operations.append(temp)
 
     return {'operations': operations}
-
