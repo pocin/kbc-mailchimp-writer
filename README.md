@@ -46,3 +46,15 @@ Each keyword should be a column name in the `new_lists.csv` input file ([see the
 Fields marked with `*` are required. Strings can be empty `''`. Boolean values must be either `true` or `false` (empty string is treaded as `false`). You can completely left out the non-mandatory columns from the csv.
 
 ## Updating of existing mailing lists
+
+## Adding members to existing lists
+[The Mailchimp API] describes what fields and their values can be used to add members to lists. Here are the most important ones. Again, starred `*` fields are required, nested values are separated with dot.
+
+```python
+  "email_address": #*string
+    "status", #*string one of ["subscribed", "unsubscribed", "cleaned", "pending", "transactional"]
+    "interests.{interest_id}", #boolean
+    "language", #string
+    "vip", #boolean
+
+```
