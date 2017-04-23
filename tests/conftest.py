@@ -26,3 +26,12 @@ def update_lists_csv():
 def client():
     return mailchimp3.MailChimp('foo', 'bar', enabled=False)
 
+
+@pytest.fixture
+def new_members_csv():
+    inputs = NamedTemporaryFile(delete=False)
+    inputs.write(b'''email_address,vip,interests.1234abc,interests.abc1234,status,email_type_option
+robin@keboola.com,true,true,true,subscribed,true
+foo@bar.com,false,true,false,pending,false''')
+    inputs.close()
+    return inputs

@@ -3,9 +3,8 @@ import json
 from tempfile import NamedTemporaryFile
 from mcwriter.utils import (serialize_dotted_path_dict,
                             serialize_lists_input,
+                            serialize_members_input,
                             prepare_batch_data)
-
-from conftest import new_lists_csv
 
 
 def test_serializing_new_lists():
@@ -93,3 +92,24 @@ def test_preparing_batch_data():
          'body': json.dumps({'foo':'bar2', 'baz': 'quxx'})}
     ]}
     assert batch_data == expected
+
+def test_serializing_members_input(new_members_csv):
+    serialized = serialize_members_input(new_members_csv.name)
+    expected = [
+        {'email_address': 'robin@keboola.com',
+         'vip': True,
+         'interests' : {
+             '1234abc': True,
+             'abc1234': True},
+         'status': 'subscribed',
+         'email_type_option': True},
+        {'email_address': 'foo@bar.com',
+         'vip': False,
+         'interests' : {
+             '1234abc': True,
+             'abc1234': False},
+         'status': 'pending',
+         'email_type_option': False
+        }]
+    assert serialized == expected
+

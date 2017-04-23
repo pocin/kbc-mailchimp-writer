@@ -253,7 +253,14 @@ def serialize_members_input(path):
     Returns:
         a list of serialized dicts in a format that can be used by MC Api
     """
-    pass
+    serialized = []
+    with open(path, 'r') as lists:
+        reader = csv.DictReader(lists)
+        for line in reader:
+            cleaned_flat_data = clean_and_validate_members_data(line)
+            serialized_line = serialize_dotted_path_dict(cleaned_flat_data)
+            serialized.append(serialized_line)
+    return serialized
 
 def prepare_batch_data(template, serialized_data):
     """Prepare data for batch operation
