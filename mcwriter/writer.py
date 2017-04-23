@@ -13,13 +13,16 @@ from keboola import docker
 from mailchimp3 import MailChimp
 from requests import HTTPError
 from .utils import (serialize_lists_input,
-                    prepare_batch_data)
+                    serialize_members_input,
+                    prepare_batch_data,
+                    prepare_batch_data_add_members)
 
 # valid fields for creating mailing list according to
 # https://us1.api.mailchimp.com/schema/3.0/Definitions/Lists/POST.json
 # http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists
 PATH_NEW_LISTS = '/data/in/tables/new_lists.csv'
 PATH_UPDATE_LISTS = '/data/in/tables/update_lists.csv'
+PATH_ADD_MEMBERS = '/data/in/tables/add_members.csv'
 BATCH_THRESHOLD = 3 # When to switch from serial jobs to batch jobs
 
 LISTS_VALID_FIELDS = ["name",
@@ -155,3 +158,55 @@ def _update_lists_serial(client, serialized_data):
         time.sleep(0.2)
 
     logging.info("")
+
+
+def _add_members_serial(client, serialized_data):
+    """Add members to list"""
+    logging.debug('Adding members to lists in serial.')
+    for data in serialized_data:
+        try:
+            client.lists.members.create(data=data, list_id=data.pop('list_id'))
+        except HTTPError as exc:
+            err_resp = json.loads(exc.response.text)
+            logging.error("Error while creating request:\n"
+                          "POST data:\n%s"
+                          "Error message\n%s", data, err_resp)
+            sys.exit(1)
+
+
+def _add_members_in_batch(client, serialized_data):
+    operation_id = 'add_members_{:%Y%m%d:%H-%M-%S}'.format(
+        datetime.datetime.now())
+    logging.debug('Creating lists in batch mode: operation_id %s', operation_id)
+    operation_template = {
+        'method': 'POST',
+        'path': '/lists/{}/members',
+        'operation_id': operation_id,
+        'body': None}
+
+    operations = prepare_batch_data_add_members(operation_template, serialized_data)
+    try:
+        response = client.batches.create(data=operations)
+        logging.debug("Got batch response: %s", response)
+    except HTTPError as exc:
+        err_resp = json.loads(exc.response.text)
+        logging.error("Error while creating batch request:\n%s\nAborting.", err_resp)
+        sys.exit(1)
+    else:
+        return response  # should contain operation_id if we later need this
+
+
+def add_members_to_lists(client, csv_members=PATH_ADD_MEMBERS, batch=False):
+    """Add members to list
+
+    Parse data from csv (default /data/in/tables/add_members.csv)
+    """
+    logging.info("Adding members to list as described in %s", csv_members)
+    serialized_data = serialize_members_input(csv_members)
+    no_members = len(serialized_data)
+    logging.info("Detected %s members to be added.", no_members)
+
+    if no_members <= BATCH_THRESHOLD or not batch:
+        _add_members_serial(client, serialized_data)
+    else:
+        batch_response = _add_members_in_batch(client, serialized_data)

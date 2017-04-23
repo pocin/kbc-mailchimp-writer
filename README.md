@@ -20,7 +20,7 @@ The writer enables:
 [According to the mailchimp v3 API](http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists),
 [or here](https://us1.api.mailchimp.com/schema/3.0/Definitions/Lists/POST.json)
 these columns can be used to create a mailing list:
-```python
+```
  "name", #*string
  "contact.company", #*string
  "contact.address1", #*string
@@ -50,11 +50,18 @@ Fields marked with `*` are required. Strings can be empty `''`. Boolean values m
 ## Adding members to existing lists
 [The Mailchimp API] describes what fields and their values can be used to add members to lists. Here are the most important ones. Again, starred `*` fields are required, nested values are separated with dot.
 
-```python
-  "email_address": #*string
+Members which are already part of given list will be updated
+```
+    "list_id": #*string; the list where you want this member to be added
+    "email_address": #*string
     "status", #*string one of ["subscribed", "unsubscribed", "cleaned", "pending", "transactional"]
     "interests.{interest_id}", #boolean
+    "merge_fields.{merge_tag}", #str (see merge tags mailchimp cheatsheet)
     "language", #string
     "vip", #boolean
-
 ```
+
+# TODO ISSUES
+`[]` How to deal with failed inserts (no transactions).
+`[]` Updating or creating members vs. creating
+
