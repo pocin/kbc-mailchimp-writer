@@ -108,8 +108,8 @@ def prepare_batch_data_add_members(template, serialized_data):
 
     for data in serialized_data:
         temp = template.copy()
+        temp['path'] = temp['path'].format(data.pop('list_id'))
         temp['body'] = json.dumps(data)
-        temp['path'] = temp['path'].format(serialized_data['list_id'])
         operations.append(temp)
 
     return {'operations': operations}

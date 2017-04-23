@@ -4,7 +4,8 @@ from tempfile import NamedTemporaryFile
 from mcwriter.utils import (serialize_dotted_path_dict,
                             serialize_lists_input,
                             serialize_members_input,
-                            prepare_batch_data)
+                            prepare_batch_data,
+                            prepare_batch_data_add_members)
 
 
 def test_serializing_new_lists():
@@ -119,3 +120,25 @@ def test_serializing_members_input(new_members_csv):
     ]
     assert serialized == expected
 
+
+
+def test_preparing_batch_members_data():
+    template = {
+        'method': 'POST',
+        'path': '/lists/{}/members',
+        'body': None}
+
+    data = [{'foo':'bar', 'baz':'qux', 'list_id':'ab1234'},
+            {'foo':'bar2', 'baz': 'quxx', 'list_id':'ab1234'}]
+
+    batch_data = prepare_batch_data_add_members(template, data)
+
+    expected = {'operations': [
+        {'method': 'POST',
+         'path': '/lists/ab1234/members',
+         'body': json.dumps({'foo':'bar', 'baz':'qux'})},
+        {'method': 'POST',
+         'path': '/lists/ab1234/members',
+         'body': json.dumps({'foo':'bar2', 'baz': 'quxx'})}
+    ]}
+    assert batch_data == expected
