@@ -14,7 +14,7 @@ from mailchimp3 import MailChimp
 from requests import HTTPError
 from .utils import (serialize_lists_input,
                     serialize_members_input,
-                    prepare_batch_data,
+                    prepare_batch_data_lists,
                     prepare_batch_data_add_members)
 
 # valid fields for creating mailing list according to
@@ -87,16 +87,7 @@ def show_lists():
     pass
 
 def _create_lists_in_batch(client, serialized_data):
-    operation_id = 'create_lists_{:%Y%m%d:%H-%M-%S}'.format(
-        datetime.datetime.now())
-    logging.debug('Creating lists in batch mode: operation_id %s', operation_id)
-    operation_template = {
-        'method': 'POST',
-        'path': '/lists',
-        'operation_id': operation_id,
-        'body': None}
-
-    operations = prepare_batch_data(operation_template, serialized_data)
+    operations = prepare_batch_data_lists(serialized_data)
     try:
         response = client.batches.create(data=operations)
         logging.debug("Got batch response: %s", response)

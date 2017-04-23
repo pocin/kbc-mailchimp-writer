@@ -69,7 +69,7 @@ def serialize_members_input(path):
             serialized.append(serialized_line)
     return serialized
 
-def prepare_batch_data(template, serialized_data):
+def prepare_batch_data_lists(serialized_data):
     """Prepare data for batch operation
 
     When submitting batch operation, the data should contain the target for the
@@ -82,10 +82,17 @@ def prepare_batch_data(template, serialized_data):
             payload
 
     """
+    template = {
+        'method': 'POST',
+        'path': '/lists',
+        'operation_id': None,
+        'body': None}
+
     operations = []
 
     for data in serialized_data:
         temp = template.copy()
+        temp['operation_id'] = data['name']
         temp['body'] = json.dumps(data)
         operations.append(temp)
 

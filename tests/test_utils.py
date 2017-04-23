@@ -4,7 +4,7 @@ from tempfile import NamedTemporaryFile
 from mcwriter.utils import (serialize_dotted_path_dict,
                             serialize_lists_input,
                             serialize_members_input,
-                            prepare_batch_data,
+                            prepare_batch_data_lists,
                             prepare_batch_data_add_members)
 
 
@@ -74,23 +74,20 @@ def test_serializing_new_lists_input_csv(new_lists_csv):
 
 
 def test_preparing_batch_data():
-    template = {
-        'method': 'POST',
-        'path': '/lists',
-        'body': None}
+    data = [{'name':'bar', 'baz':'qux'},
+            {'name':'bar2', 'baz': 'quxx'}]
 
-    data = [{'foo':'bar', 'baz':'qux'},
-            {'foo':'bar2', 'baz': 'quxx'}]
-
-    batch_data = prepare_batch_data(template, data)
+    batch_data = prepare_batch_data_lists(data)
 
     expected = {'operations': [
         {'method': 'POST',
          'path': '/lists',
-         'body': json.dumps({'foo':'bar', 'baz':'qux'})},
+         'operation_id': 'bar',
+         'body': json.dumps({'name':'bar', 'baz':'qux'})},
         {'method': 'POST',
          'path': '/lists',
-         'body': json.dumps({'foo':'bar2', 'baz': 'quxx'})}
+         'operation_id': 'bar2',
+         'body': json.dumps({'name':'bar2', 'baz': 'quxx'})}
     ]}
     assert batch_data == expected
 
