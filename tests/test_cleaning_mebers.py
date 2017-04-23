@@ -1,10 +1,10 @@
 import pytest
 
-from mcwriter.utils import (_clean_mandatory_custom_fields,
-                            clean_and_validate_members_data,
-                            _clean_members_interests,
-                            _clean_members_merge_fields,
-                            members_mandatory_custom_fields)
+from mcwriter.cleaning import (_clean_mandatory_custom_fields,
+                               clean_and_validate_members_data,
+                               _clean_members_interests,
+                               _clean_members_merge_fields,
+                               members_mandatory_custom_fields)
 
 def test_cleaning_mandatory_custom_fields_raises_if_not_present():
     data = {

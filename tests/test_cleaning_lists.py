@@ -1,15 +1,15 @@
 import pytest
-from mcwriter.utils import (_clean_mandatory_str_fields,
-                            _clean_optional_str_fields,
-                            _clean_mandatory_bool_fields,
-                            _clean_optional_bool_fields,
-                            _clean_optional_custom_fields,
-                            clean_and_validate_lists_data,
-                            lists_mandatory_str_fields,
-                            lists_optional_str_fields,
-                            lists_mandatory_bool_fields,
-                            lists_optional_bool_fields,
-                            lists_optional_custom_fields)
+from mcwriter.cleaning import (_clean_mandatory_str_fields,
+                               _clean_optional_str_fields,
+                               _clean_mandatory_bool_fields,
+                               _clean_optional_bool_fields,
+                               _clean_optional_custom_fields,
+                               clean_and_validate_lists_data,
+                               lists_mandatory_str_fields,
+                               lists_optional_str_fields,
+                               lists_mandatory_bool_fields,
+                               lists_optional_bool_fields,
+                               lists_optional_custom_fields)
 
 def test_cleaning_mandatory_str_fields_success():
     data = {
