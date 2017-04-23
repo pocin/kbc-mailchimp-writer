@@ -91,7 +91,7 @@ def prepare_batch_data(template, serialized_data):
 
     return {'operations': operations}
 
-def prepare_batch_data_add_members(template, serialized_data):
+def prepare_batch_data_add_members(serialized_data):
     """Prepare data for batch operation
 
     When submitting batch operation, the data should contain the target for the
@@ -104,11 +104,21 @@ def prepare_batch_data_add_members(template, serialized_data):
             payload
 
     """
+    template = {
+        'method': 'PUT',
+        'path': '/lists/{list_id}/members/{subscriber_hash}',
+        'operation_id': None,
+        'status_if_new': None,
+        'body': None}
     operations = []
 
     for data in serialized_data:
         temp = template.copy()
-        temp['path'] = temp['path'].format(data.pop('list_id'))
+        temp['path'] = temp['path'].format(
+            list_id=data.pop('list_id'),
+            subscriber_hash=data.pop('subscriber_hash'))
+        temp['operation_id'] = data['email_address']
+        temp['status_if_new'] = data.pop('status_if_new')
         temp['body'] = json.dumps(data)
         operations.append(temp)
 

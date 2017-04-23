@@ -104,8 +104,10 @@ def test_serializing_members_input(new_members_csv):
              '1234abc': True,
              'abc1234': True},
          'status': 'subscribed',
+         'status_if_new': 'subscribed',
          'email_type_option': True,
-        'merge_fields': {'*|FNAME|*':'Robin'}
+         'subscriber_hash': 'a2a362ca5ce6dc7e069b6f7323342079',  #md5 hash
+         'merge_fields': {'*|FNAME|*': 'Robin'}
         },
         {'email_address': 'foo@bar.com',
          'list_id': '12345',
@@ -114,6 +116,8 @@ def test_serializing_members_input(new_members_csv):
              '1234abc': True,
              'abc1234': False},
          'status': 'pending',
+         'status_if_new': 'subscribed',
+         'subscriber_hash': 'f3ada405ce890b6f8204094deb12d8a8',  #md5 hash
          'email_type_option': False,
          'merge_fields': {'*|FNAME|*': ''}
         }
@@ -123,22 +127,25 @@ def test_serializing_members_input(new_members_csv):
 
 
 def test_preparing_batch_members_data():
-    template = {
-        'method': 'POST',
-        'path': '/lists/{}/members',
-        'body': None}
+    data = [{'foo':'bar', 'email_address': 'foo@barbar.cz',
+             'list_id':'ab1234', 'subscriber_hash': 'foobar',
+             'status_if_new': 'subscribed'},
+            {'foo':'bar2', 'email_address': 'foo@bar.cz',
+             'list_id':'ab1234', 'subscriber_hash': 'foobar',
+             'status_if_new': 'subscribed'}]
 
-    data = [{'foo':'bar', 'baz':'qux', 'list_id':'ab1234'},
-            {'foo':'bar2', 'baz': 'quxx', 'list_id':'ab1234'}]
-
-    batch_data = prepare_batch_data_add_members(template, data)
+    batch_data = prepare_batch_data_add_members(data)
 
     expected = {'operations': [
-        {'method': 'POST',
-         'path': '/lists/ab1234/members',
-         'body': json.dumps({'foo':'bar', 'baz':'qux'})},
-        {'method': 'POST',
-         'path': '/lists/ab1234/members',
-         'body': json.dumps({'foo':'bar2', 'baz': 'quxx'})}
+        {'method': 'PUT',
+         'path': '/lists/ab1234/members/foobar',
+         'operation_id': 'foo@barbar.cz',
+         'status_if_new': 'subscribed',
+         'body': json.dumps({'foo':'bar', 'email_address': 'foo@barbar.cz'})},
+        {'method': 'PUT',
+         'path': '/lists/ab1234/members/foobar',
+         'operation_id': 'foo@bar.cz',
+         'status_if_new': 'subscribed',
+         'body': json.dumps({'foo':'bar2', 'email_address': 'foo@bar.cz'})}
     ]}
     assert batch_data == expected

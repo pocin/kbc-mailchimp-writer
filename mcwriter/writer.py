@@ -22,6 +22,7 @@ from .utils import (serialize_lists_input,
 # http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists
 PATH_NEW_LISTS = '/data/in/tables/new_lists.csv'
 PATH_UPDATE_LISTS = '/data/in/tables/update_lists.csv'
+PATH_UPDATE_MEMBERS = '/data/in/tables/update_members.csv'
 PATH_ADD_MEMBERS = '/data/in/tables/add_members.csv'
 BATCH_THRESHOLD = 3 # When to switch from serial jobs to batch jobs
 
@@ -165,7 +166,9 @@ def _add_members_serial(client, serialized_data):
     logging.debug('Adding members to lists in serial.')
     for data in serialized_data:
         try:
-            client.lists.members.create(data=data, list_id=data.pop('list_id'))
+            client.lists.members.create_or_update(data=data,
+                                                  list_id=data.pop('list_id'),
+                                                  subscriber_hash=data.pop('subscriber_hash'))
         except HTTPError as exc:
             err_resp = json.loads(exc.response.text)
             logging.error("Error while creating request:\n"
@@ -178,13 +181,8 @@ def _add_members_in_batch(client, serialized_data):
     operation_id = 'add_members_{:%Y%m%d:%H-%M-%S}'.format(
         datetime.datetime.now())
     logging.debug('Creating lists in batch mode: operation_id %s', operation_id)
-    operation_template = {
-        'method': 'POST',
-        'path': '/lists/{}/members',
-        'operation_id': operation_id,
-        'body': None}
 
-    operations = prepare_batch_data_add_members(operation_template, serialized_data)
+    operations = prepare_batch_data_add_members(serialized_data)
     try:
         response = client.batches.create(data=operations)
         logging.debug("Got batch response: %s", response)
@@ -197,7 +195,7 @@ def _add_members_in_batch(client, serialized_data):
 
 
 def add_members_to_lists(client, csv_members=PATH_ADD_MEMBERS, batch=False):
-    """Add members to list
+    """Add members to list. Update if they are already there.
 
     Parse data from csv (default /data/in/tables/add_members.csv)
     """

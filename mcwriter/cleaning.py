@@ -1,5 +1,6 @@
 import logging
 import re
+from hashlib import md5
 
 # fields for adding lists
 lists_mandatory_str_fields = ("name", "contact.company", "contact.address1",
@@ -19,7 +20,12 @@ lists_optional_custom_fields = {"visibility": ['pub', 'prv']}
 members_mandatory_str_fields = ('email_address', 'list_id')
 members_mandatory_custom_fields = {"status": ['subscribed', 'unsubscribed',
                                               'cleaned', 'pending',
-                                              'transactional']}
+                                              'transactional'],
+                                   "status_if_new": ['subscribed', 'unsubscribed',
+                                                     'cleaned', 'pending',
+                                                     'transactional']}
+
+
 members_mandatory_bool_fields = ("email_type_option", )
 members_optional_str_fields = ('language', )
 members_optional_bool_fields = ("vip", )
@@ -46,6 +52,8 @@ def clean_and_validate_members_data(one_list):
             (_clean_mandatory_custom_fields, members_mandatory_custom_fields)):
         one_list = cleaning_procedure(one_list, fields)
     one_list = _clean_members_interests(one_list)
+    md5hash = md5(bytes(one_list['email_address'], 'utf-8')).hexdigest()
+    one_list['subscriber_hash'] = md5hash
     return one_list
 
 
