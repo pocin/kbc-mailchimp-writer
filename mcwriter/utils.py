@@ -21,6 +21,16 @@ lists_mandatory_bool_fields = ("email_type_option", )
 lists_optional_bool_fields = ("use_archive_bar", )
 lists_optional_custom_fields = {"visibility": ['pub', 'prv']}
 
+# fields for adding members
+members_mandatory_str_fields = ('email_address', )
+members_mandatory_custom_fields = {"status": ['subscribed', 'unsubscribed',
+                                              'cleaned', 'pending',
+                                              'transactional']}
+members_mandatory_bool_fields = ("email_type_option", )
+members_optional_str_fields = ('language', )
+members_optional_bool_fields = ("interests.<interest_id>", "vip" )
+
+
 def serialize_dotted_path_dict(cleaned_flat_data):
     """Convert fields from csv file into required nested format
 
@@ -168,6 +178,30 @@ def _clean_optional_custom_fields(one_list, fields):
     return one_list
 
 
+def _clean_mandatory_custom_fields(one_list, fields):
+    """Clean and validate fields
+
+    Args:
+        one_list (dict): one mailing list details in a dict format
+        fields (dict): Mapping of column name and possible values in an list
+    """
+    for field, expected in fields.items():
+        try:
+            value = one_list[field]
+        except KeyError:
+            raise KeyError("Every member must have boolean {} field. "
+                           "This entry doesnt: {}".format(field, one_list))
+        if value not in expected:
+            raise TypeError("The field {field} must be one of "
+                            "{expected}. It is {value} in {data}".format(
+                                field=field,
+                                expected=expected,
+                                value=value,
+                                data=one_list))
+    return one_list
+
+
+
 def serialize_lists_input(path):
     """Parse the inputs csvfile containing details on new mailing lists
 
@@ -184,6 +218,17 @@ def serialize_lists_input(path):
             serialized_line = serialize_dotted_path_dict(cleaned_flat_data)
             serialized.append(serialized_line)
     return serialized
+
+def serialize_members_input(path):
+    """Parse the members csvfile containing subscribers and lists
+
+    Args:
+        path (str): /path/to/inputs/add_members.csv
+
+    Returns:
+        a list of serialized dicts in a format that can be used by MC Api
+    """
+    pass
 
 def prepare_batch_data(template, serialized_data):
     """Prepare data for batch operation
