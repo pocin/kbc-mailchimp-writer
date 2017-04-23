@@ -50,9 +50,12 @@ Fields marked with `*` are required. Strings can be empty `''`. Boolean values m
 ## Adding members to existing lists
 [The Mailchimp API] describes what fields and their values can be used to add members to lists. Here are the most important ones. Again, starred `*` fields are required, nested values are separated with dot.
 
-Members which are already part of given list will be updated
+Members which are already in given list will be updated (supplied values and status)
+
 ```
     "list_id": #*string; the list where you want this member to be added
+    "status_if_new": #*string; one of ["subscribed", "unsubscribed", "cleaned", "pending", "transactional"]
+                     # Defineds which status will be assigned to existing email addressess
     "email_address": #*string
     "status", #*string one of ["subscribed", "unsubscribed", "cleaned", "pending", "transactional"]
     "interests.{interest_id}", #boolean
@@ -62,7 +65,7 @@ Members which are already part of given list will be updated
 ```
 
 # TODO ISSUES
-`[]` How to deal with failed inserts (no transactions).
-`[]` Updating or creating members vs. creating
-`[]` Wait for batch job to complete and how to handle problematic cases
+`[]` How to deal with failed inserts (no transactions).  
+`[]` Updating or creating members vs. creating  
+`[]` Wait for batch job to complete and how to handle problematic cases  
 
