@@ -6,6 +6,21 @@ from collections import defaultdict
 import csv
 import json
 import logging
+
+# fields for adding lists
+lists_mandatory_str_fields = ("name", "contact.company", "contact.address1",
+                              "contact.city", "contact.state", "contact.zip",
+                              "contact.country", "permission_reminder",
+                              "campaign_defaults.from_name",
+                              "campaign_defaults.from_email",
+                              "campaign_defaults.subject",
+                              "campaign_defaults.language")
+lists_optional_str_fields = ("contact.address2", "contact.phone",
+                             "notify_on_subscribe", "notify_on_unsubscribe",)
+lists_mandatory_bool_fields = ("email_type_option", )
+lists_optional_bool_fields = ("use_archive_bar", )
+lists_optional_custom_fields = {"visibility": ['pub', 'prv']}
+
 def serialize_dotted_path_dict(cleaned_flat_data):
     """Convert fields from csv file into required nested format
 
@@ -32,32 +47,18 @@ def serialize_dotted_path_dict(cleaned_flat_data):
 
 def clean_and_validate_lists_data(one_list):
     logging.debug("Cleaning one mailing list data")
-    for cleaning_procedure in (_clean_mandatory_bool_fields,
-                               _clean_optional_str_fields,
-                               _clean_mandatory_bool_fields,
-                               _clean_optional_bool_fields,
-                               _clean_optional_custom_fields):
-        one_list = cleaning_procedure(one_list)
+    for cleaning_procedure, fields in (
+            (_clean_mandatory_bool_fields, lists_mandatory_bool_fields),
+            (_clean_optional_str_fields, lists_optional_str_fields),
+            (_clean_optional_bool_fields, lists_optional_bool_fields),
+            (_clean_optional_custom_fields, lists_optional_custom_fields)):
+        one_list = cleaning_procedure(one_list, fields)
     return one_list
 
 
 
-def _clean_mandatory_str_fields(one_list):
-    mandatory_str_fields = {
-        "name": str,
-        "contact.company": str,
-        "contact.address1": str,
-        "contact.city": str,
-        "contact.state": str,
-        "contact.zip": str,
-        "contact.country": str,
-        "permission_reminder": str,
-        "campaign_defaults.from_name": str,
-        "campaign_defaults.from_email": str,
-        "campaign_defaults.subject": str,
-        "campaign_defaults.language": str,
-    }
-    for field in mandatory_str_fields:
+def _clean_mandatory_str_fields(one_list, fields):
+    for field in fields:
         try:
             value = one_list[field]
             if not isinstance(value, str):
@@ -69,19 +70,13 @@ def _clean_mandatory_str_fields(one_list):
                 field, one_list)
     return one_list
 
-def _clean_optional_str_fields(one_list):
+def _clean_optional_str_fields(one_list, fields):
     """Clean and validate fields
 
     Args:
         one_list (dict): one mailing list details in a dict format
     """
-    optional_str_fields = {
-        "contact.address2": str,
-        "contact.phone": str,
-        "notify_on_subscribe": str,
-        "notify_on_unsubscribe": str,
-    }
-    for field in optional_str_fields:
+    for field in fields:
         try:
             if one_list[field] is None:
                 one_list[field] = ''
@@ -95,14 +90,13 @@ def _clean_optional_str_fields(one_list):
             continue
     return one_list
 
-def _clean_mandatory_bool_fields(one_list):
+def _clean_mandatory_bool_fields(one_list, fields):
     """Clean and validate fields
 
     Args:
         one_list (dict): one mailing list details in a dict format
     """
-    mandatory_bool_fields = {"email_type_option": bool}
-    for field in mandatory_bool_fields:
+    for field in fields:
         try:
             # The csv can contain a string, True/False, or None (if empty)
             # neither None, nor empty strings are not allowed
@@ -126,15 +120,14 @@ def _clean_mandatory_bool_fields(one_list):
                                 " not '{}'".format(field, one_list[field]))
     return one_list
 
-def _clean_optional_bool_fields(one_list):
+def _clean_optional_bool_fields(one_list, fields):
     """Clean and validate fields
 
     Args:
         one_list (dict): one mailing list details in a dict format
     """
 
-    optional_bool_fields = {"use_archive_bar": bool}
-    for field in optional_bool_fields:
+    for field in fields:
         try:
             # The csv can contain a string, True/False, or None (if empty)
             # neither None, nor empty strings are not allowed
@@ -156,14 +149,14 @@ def _clean_optional_bool_fields(one_list):
     return one_list
 
 
-def _clean_optional_custom_fields(one_list):
+def _clean_optional_custom_fields(one_list, fields):
     """Clean and validate fields
 
     Args:
         one_list (dict): one mailing list details in a dict format
+        fields (dict): Mapping of column name and possible values in an list
     """
-    optional_custom_fields = {"visibility": ['pub', 'prv']}
-    for field, expected in optional_custom_fields.items():
+    for field, expected in fields.items():
         value = one_list[field]
         if value not in expected:
             raise TypeError("The field {field} must be one of "
@@ -179,7 +172,7 @@ def serialize_lists_input(path):
     """Parse the inputs csvfile containing details on new mailing lists
 
     Arguments:
-        path (str): /path/to/inputs/new_lists.csvfile
+        path (str): /path/to/inputs/new_lists.csv
     Returns:
         a list of serialized dicts in a format that can be used by MC Api
     """

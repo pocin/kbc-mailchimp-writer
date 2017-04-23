@@ -4,7 +4,12 @@ from mcwriter.utils import (_clean_mandatory_str_fields,
                             _clean_mandatory_bool_fields,
                             _clean_optional_bool_fields,
                             _clean_optional_custom_fields,
-                            clean_and_validate_lists_data)
+                            clean_and_validate_lists_data,
+                            lists_mandatory_str_fields,
+                            lists_optional_str_fields,
+                            lists_mandatory_bool_fields,
+                            lists_optional_bool_fields,
+                            lists_optional_custom_fields)
 
 def test_cleaning_mandatory_str_fields_success():
     data = {
@@ -25,7 +30,7 @@ def test_cleaning_mandatory_str_fields_success():
     expected_data = {}
     expected_data.update(data)
 
-    cleaned_data = _clean_mandatory_str_fields(data)
+    cleaned_data = _clean_mandatory_str_fields(data, lists_mandatory_str_fields)
     assert cleaned_data == expected_data
 
 
@@ -46,7 +51,7 @@ def test_cleaning_mandatory_str_fields_missing_fails():
     }
 
     with pytest.raises(KeyError):
-        cleaned_data = _clean_mandatory_str_fields(data)
+        cleaned_data = _clean_mandatory_str_fields(data, lists_mandatory_str_fields)
 
 def test_cleaning_optional_str_fields_missing_doesnt_raise():
     data = {
@@ -63,7 +68,7 @@ def test_cleaning_optional_str_fields_missing_doesnt_raise():
         "contact.phone": '',
         "notify_on_subscribe": '',
     }
-    assert expected ==_clean_optional_str_fields(data)
+    assert expected ==_clean_optional_str_fields(data, lists_optional_str_fields)
 
 def test_cleaning_mandatory_bool_field_is_there():
     data = {
@@ -75,7 +80,7 @@ def test_cleaning_mandatory_bool_field_is_there():
         "name": "Robin",
         "email_type_option": True
     }
-    assert _clean_mandatory_bool_fields(data) == expected
+    assert _clean_mandatory_bool_fields(data, lists_mandatory_bool_fields) == expected
 
 
 def test_cleaning_mandatory_bool_field_handling_None():
@@ -88,7 +93,7 @@ def test_cleaning_mandatory_bool_field_handling_None():
         "name": "Robin",
         "email_type_option": False
     }
-    assert _clean_mandatory_bool_fields(data) == expected
+    assert _clean_mandatory_bool_fields(data, lists_mandatory_bool_fields) == expected
 
 def test_cleaning_mandatory_bool_field_not_there_raises():
     data = {
@@ -96,7 +101,7 @@ def test_cleaning_mandatory_bool_field_not_there_raises():
     }
 
     with pytest.raises(KeyError):
-        _clean_mandatory_bool_fields(data)
+        _clean_mandatory_bool_fields(data, lists_mandatory_bool_fields)
 
 
 def test_cleaning_mandatory_bool_field_not_bool_raises():
@@ -106,7 +111,7 @@ def test_cleaning_mandatory_bool_field_not_bool_raises():
     }
 
     with pytest.raises(TypeError):
-        _clean_mandatory_bool_fields(data)
+        _clean_mandatory_bool_fields(data, lists_mandatory_bool_fields)
 
 
 def test_cleaning_optional_bool_fields_not_bool_raises():
@@ -116,7 +121,7 @@ def test_cleaning_optional_bool_fields_not_bool_raises():
     }
 
     with pytest.raises(TypeError):
-        _clean_optional_bool_fields(data)
+        _clean_optional_bool_fields(data, lists_optional_bool_fields)
 
 
 def test_cleaning_optional_bool_fields_true():
@@ -129,7 +134,7 @@ def test_cleaning_optional_bool_fields_true():
         "name": "Robin",
         "use_archive_bar": True
     }
-    assert _clean_optional_bool_fields(data) == expected
+    assert _clean_optional_bool_fields(data, lists_optional_bool_fields) == expected
 
 def test_cleaning_optional_bool_fields_false():
     data = {
@@ -141,7 +146,7 @@ def test_cleaning_optional_bool_fields_false():
         "name": "Robin",
         "use_archive_bar": False
     }
-    assert _clean_optional_bool_fields(data) == expected
+    assert _clean_optional_bool_fields(data, lists_optional_bool_fields) == expected
 
 
 def test_cleaning_optional_bool_fields2_raises_on_empty_string():
@@ -150,7 +155,7 @@ def test_cleaning_optional_bool_fields2_raises_on_empty_string():
         "use_archive_bar": ""
     }
     with pytest.raises(TypeError):
-        _clean_optional_bool_fields(data)
+        _clean_optional_bool_fields(data, lists_optional_bool_fields)
 
 
 def test_cleaning_optional_bool_fields_None():
@@ -163,7 +168,7 @@ def test_cleaning_optional_bool_fields_None():
         "name": "Robin",
         "use_archive_bar": False
     }
-    assert _clean_optional_bool_fields(data) == expected
+    assert _clean_optional_bool_fields(data, lists_optional_bool_fields) == expected
 
 def test_optional_custom_fields_prv():
     data = {
@@ -175,7 +180,7 @@ def test_optional_custom_fields_prv():
         "visibility": 'prv'
     }
 
-    assert _clean_optional_custom_fields(data) == expected
+    assert _clean_optional_custom_fields(data, lists_optional_custom_fields) == expected
 
 
 def test_optional_custom_fields_pub():
@@ -187,7 +192,7 @@ def test_optional_custom_fields_pub():
         "name": "Robin",
         "visibility": 'pub'
     }
-    assert _clean_optional_custom_fields(data) == expected
+    assert _clean_optional_custom_fields(data, lists_optional_custom_fields) == expected
 
 def test_clean_optional_custom_fields_raises_unconvertable():
     data = {
@@ -195,7 +200,7 @@ def test_clean_optional_custom_fields_raises_unconvertable():
         "visibility": 'Must be pub or prv!'
     }
     with pytest.raises(TypeError):
-        _clean_optional_custom_fields(data)
+        _clean_optional_custom_fields(data, lists_optional_custom_fields)
 
 
 def test_cleaning_and_validating_lists_data():
