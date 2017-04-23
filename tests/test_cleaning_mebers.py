@@ -42,6 +42,7 @@ def test_cleaning_mandatory_custom_fields_raises_if_invalid():
 def test_cleaning_members_data_all_options_succeeds():
     data = {
         'email_address': 'Robin@example.com',
+        'list_id': '12345',
         'status': 'subscribed',
         'vip': 'true',
         'email_type_option': 'true',
@@ -51,6 +52,7 @@ def test_cleaning_members_data_all_options_succeeds():
         }
     expected = {
         'email_address': 'Robin@example.com',
+        'list_id': '12345',
         'status': 'subscribed',
         'vip': True,
         'email_type_option': True,
@@ -64,6 +66,7 @@ def test_cleaning_members_data_all_options_succeeds():
 def test_cleaning_members_data_all_options_raises_on_invalid_interest_id():
     data = {
         'email_address': 'Robin@example.com',
+        'list_id': '1234',
         'status': 'subscribed',
         'vip': 'true',
         'email_type_option': 'true',
@@ -72,6 +75,20 @@ def test_cleaning_members_data_all_options_raises_on_invalid_interest_id():
         }
 
     with pytest.raises(ValueError):
+        clean_and_validate_members_data(data)
+
+def test_cleaning_members_data_all_options_raises_on_missing_list_id():
+    data = {
+        'email_address': 'Robin@example.com',
+        'status': 'subscribed',
+        # Missing list_id
+        'vip': 'true',
+        'email_type_option': 'true',
+        'language': 'en',
+        'interests.abc1234': 'true'
+        }
+
+    with pytest.raises(KeyError):
         clean_and_validate_members_data(data)
 
 def test_cleaning_members_data_all_options_raises_on_missing_email():

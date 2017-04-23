@@ -97,6 +97,7 @@ def test_serializing_members_input(new_members_csv):
     serialized = serialize_members_input(new_members_csv.name)
     expected = [
         {'email_address': 'robin@keboola.com',
+         'list_id': '12345',
          'vip': True,
          'interests' : {
              '1234abc': True,
@@ -106,6 +107,7 @@ def test_serializing_members_input(new_members_csv):
         'merge_fields': {'*|FNAME|*':'Robin'}
         },
         {'email_address': 'foo@bar.com',
+         'list_id': '12345',
          'vip': False,
          'interests' : {
              '1234abc': True,

@@ -23,7 +23,7 @@ lists_optional_bool_fields = ("use_archive_bar", )
 lists_optional_custom_fields = {"visibility": ['pub', 'prv']}
 
 # fields for adding members
-members_mandatory_str_fields = ('email_address', )
+members_mandatory_str_fields = ('email_address', 'list_id')
 members_mandatory_custom_fields = {"status": ['subscribed', 'unsubscribed',
                                               'cleaned', 'pending',
                                               'transactional']}
@@ -84,13 +84,14 @@ def _clean_mandatory_str_fields(one_list, fields):
     for field in fields:
         try:
             value = one_list[field]
-            if not isinstance(value, str):
-                raise TypeError("Field {}:{} must be a string! It is {}".format(
-                    field, value, type(value)))
         except KeyError:
             raise KeyError(
                 "Every list must have str {} field. This entry doesnt: {}".format(
                 field, one_list))
+        else:
+            if not isinstance(value, str):
+                raise TypeError("Field {}:{} must be a string! It is {}".format(
+                    field, value, type(value)))
     return one_list
 
 def _clean_optional_str_fields(one_list, fields):
