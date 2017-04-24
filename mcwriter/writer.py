@@ -86,17 +86,6 @@ def show_lists():
     """Show existing mailing lists"""
     pass
 
-def _create_lists_in_batch(client, serialized_data):
-    operations = prepare_batch_data_lists(serialized_data)
-    try:
-        response = client.batches.create(data=operations)
-        logging.debug("Got batch response: %s", response)
-    except HTTPError as exc:
-        err_resp = json.loads(exc.response.text)
-        logging.error("Error while creating request:\n%s\nAborting.", err_resp)
-        sys.exit(1)
-    else:
-        return response  # should contain operation_id if we later need this
 
 def _create_lists_serial(client, serialized_data):
     logging.debug('Creating lists in serial.')
@@ -116,16 +105,18 @@ def _create_lists_serial(client, serialized_data):
 
     return created_lists
 
-def create_lists(client, csv_lists=PATH_NEW_LISTS, batch=False):
-    """Create new mailing list """
+def create_lists(client, csv_lists=PATH_NEW_LISTS):
+    """Create new mailing list
+
+    The reason for this wrapper function is that it is possible to create lists
+    in batch. A function once present, but removed because it is PITA to
+    retrieve the results created by the batch job and probably not worth the
+    hassle, since one is not expected to create hundreds of lists.
+
+    """
     serialized_data = serialize_lists_input(csv_lists)
     logging.debug("Creating %d new lists defined in %s", len(serialized_data), csv_lists)
-    if batch or len(serialized_data) > BATCH_THRESHOLD:
-        batch_response = _create_lists_in_batch(client=client, serialized_data=serialized_data)
-        # The batch job is executed in the background on the MC servers
-        # To check the status, we need to GET /3.0/batches/{batch_response['id']}
-    else:
-        _create_lists_serial(client=client, serialized_data=serialized_data)
+    _create_lists_serial(client=client, serialized_data=serialized_data)
     logging.info("New lists created.")
 
 
