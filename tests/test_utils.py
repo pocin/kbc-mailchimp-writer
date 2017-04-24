@@ -97,7 +97,7 @@ def test_serializing_members_input(new_members_csv):
     serialized = serialize_members_input(new_members_csv.name)
     expected = [
         {'email_address': 'robin@keboola.com',
-         'list_id': '12345',
+         'list_id': '12345', # comes from the csvfile
          'vip': True,
          'interests' : {
              '1234abc': True,
@@ -107,7 +107,6 @@ def test_serializing_members_input(new_members_csv):
          'email_type_option': True,
          'subscriber_hash': 'a2a362ca5ce6dc7e069b6f7323342079',  #md5 hash
          'merge_fields': {'*|FNAME|*': 'Robin'},
-         'custom_list_id': 'custom_list1',
         },
         {'email_address': 'foo@bar.com',
          'list_id': '12345',
@@ -120,11 +119,43 @@ def test_serializing_members_input(new_members_csv):
          'subscriber_hash': 'f3ada405ce890b6f8204094deb12d8a8',  #md5 hash
          'email_type_option': False,
          'merge_fields': {'*|FNAME|*': ''},
-         'custom_list_id': 'custom_list1',
+        }
+    ]
+    assert serialized[0] == expected[0]
+    assert serialized[1] == expected[1]
+
+def test_serializing_members_input_linked_to_lists(new_members_csv_linked_to_lists,
+                                                   created_lists):
+    serialized = serialize_members_input(
+        new_members_csv_linked_to_lists.name,
+        created_lists=created_lists)
+    expected = [
+        {'email_address': 'robin@keboola.com',
+         'list_id': 'mailchimp_list_id', # the id comes from the mapping returned by create_lists()
+         'vip': True,
+         'interests' : {
+             '1234abc': True,
+             'abc1234': True},
+         'status': 'subscribed',
+         'status_if_new': 'subscribed',
+         'email_type_option': True,
+         'subscriber_hash': 'a2a362ca5ce6dc7e069b6f7323342079',  #md5 hash
+         'merge_fields': {'*|FNAME|*': 'Robin'},
+        },
+        {'email_address': 'foo@bar.com',
+         'list_id': 'mailchimp_list_id', 
+         'vip': False,
+         'interests' : {
+             '1234abc': True,
+             'abc1234': False},
+         'status': 'pending',
+         'status_if_new': 'subscribed',
+         'subscriber_hash': 'f3ada405ce890b6f8204094deb12d8a8',  #md5 hash
+         'email_type_option': False,
+         'merge_fields': {'*|FNAME|*': ''},
         }
     ]
     assert serialized == expected
-
 
 
 def test_preparing_batch_members_data():

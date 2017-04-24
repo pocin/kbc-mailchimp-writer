@@ -51,20 +51,28 @@ def serialize_lists_input(path):
     return serialized
 
 
-def serialize_members_input(path):
+def serialize_members_input(path, created_lists=None):
     """Parse the members csvfile containing subscribers and lists
+
+    optionally (created_lists arg) appends the list_id to the data based on the
+    custom_id and custom_list_id mapping defined in csv
 
     Args:
         path (str): /path/to/inputs/add_members.csv
+        created_lists (dict): Mapping of custom_list_id: actual mailchimp list_id
 
     Returns:
         a list of serialized dicts in a format that can be used by MC Api
+
     """
     serialized = []
     with open(path, 'r') as lists:
         reader = csv.DictReader(lists)
         for line in reader:
             cleaned_flat_data = clean_and_validate_members_data(line)
+            if created_lists is not None:
+                mailchimp_list_id = created_lists[cleaned_flat_data.pop('custom_list_id')]
+                cleaned_flat_data['list_id'] = mailchimp_list_id
             serialized_line = serialize_dotted_path_dict(cleaned_flat_data)
             serialized.append(serialized_line)
     return serialized
