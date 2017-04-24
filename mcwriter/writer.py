@@ -22,9 +22,9 @@ from .utils import (serialize_lists_input,
 # http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists
 PATH_NEW_LISTS = '/data/in/tables/new_lists.csv'
 PATH_UPDATE_LISTS = '/data/in/tables/update_lists.csv'
-PATH_UPDATE_MEMBERS = '/data/in/tables/update_members.csv'
 PATH_ADD_MEMBERS = '/data/in/tables/add_members.csv'
 BATCH_THRESHOLD = 3 # When to switch from serial jobs to batch jobs
+SEQUENTIAL_REQUEST_DELAY = 0.3 #seconds between sequential requests
 
 LISTS_VALID_FIELDS = ["name",
                       "contact.company", "contact.address1", "contact.address2",
@@ -96,6 +96,7 @@ def _create_lists_serial(client, serialized_data):
             custom_id = data.get('custom_id')
             if custom_id:
                 created_lists[custom_id] = resp['id']
+            time.sleep(SEQUENTIAL_REQUEST_DELAY)
         except HTTPError as exc:
             err_resp = json.loads(exc.response.text)
             logging.error("Error while creating request:\n"
