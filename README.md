@@ -1,10 +1,12 @@
 # Tasks
 # About
-Mailchimp writer should be able to create and manage mailing lists. Managing includes updating and removing email addresses.
+Mailchimp writer should be able to create and manage mailing lists. Managing
+includes updating and removing email addresses.
 
 # Resources
 Implement as an Keboola extension: https://developers.keboola.com/extend/docker/
-API DOCS here v3 here: http://developer.mailchimp.com/documentation/mailchimp/guides/get-started-with-mailchimp-api-3/
+API DOCS here v3 here:
+http://developer.mailchimp.com/documentation/mailchimp/guides/get-started-with-mailchimp-api-3/
 
 https://github.com/charlesthk/python-mailchimp
 
@@ -20,6 +22,7 @@ The writer enables:
 [According to the mailchimp v3 API](http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists),
 [or here](https://us1.api.mailchimp.com/schema/3.0/Definitions/Lists/POST.json)
 these columns can be used to create a mailing list:
+
 ```
  "name", #*string
  "contact.company", #*string
@@ -41,16 +44,27 @@ these columns can be used to create a mailing list:
  "email_type_option", #*true/false
  "visibility" #pub/prv
 ```
-Each keyword should be a column name in the `new_lists.csv` input file ([see the template](./templates/new_lists.csv)). Each row represents a new mailing list.
 
-Fields marked with `*` are required. Strings can be empty `''`. Boolean values must be either `true` or `false` (empty string is treaded as `false`). You can completely left out the non-mandatory columns from the csv.
+Each keyword should be a column name in the `new_lists.csv` input file
+([see the template](./templates/new_lists.csv)). Each row represents a new
+mailing list.
+
+Fields marked with `*` are required. Strings can be empty `''`. Boolean values
+must be either `true` or `false` (empty string is treaded as `false`). You can
+completely left out the non-mandatory columns from the csv.
 
 ## Updating of existing mailing lists
 
 ## Adding members to existing lists
-[The Mailchimp API] describes what fields and their values can be used to add members to lists. Here are the most important ones. Again, starred `*` fields are required, nested values are separated with dot.
 
-Members which are already in given list will be updated (supplied values and status)
+[The Mailchimp API](http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/#edit-put_lists_list_id_members_subscriber_hash) describes
+what fields and their values can be used to add-or-update members to lists. Here
+are the most important ones. Again, starred `*` fields are required, nested
+values are separated with dot.
+
+Members which are already in given list will be updated (only supplied values.
+For exapmle the record's `vip` status will be left intact if it is already
+present and the `vip` column is not defined in the input table.
 
 ```
     "list_id": #*string; the list where you want this member to be added
