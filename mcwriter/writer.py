@@ -62,7 +62,7 @@ def _setup_client(params):
         logging.error("Please provide your mailchimp username")
         sys.exit(1)
     try:
-        client_config['mc_secret'] = params['apikey']
+        client_config['mc_secret'] = params['#apikey']
     except KeyError:
         logging.error("Please provide your mailchimp apikey")
         sys.exit(1)
