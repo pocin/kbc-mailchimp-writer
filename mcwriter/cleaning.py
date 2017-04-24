@@ -11,7 +11,8 @@ lists_mandatory_str_fields = ("name", "contact.company", "contact.address1",
                               "campaign_defaults.subject",
                               "campaign_defaults.language")
 lists_optional_str_fields = ("contact.address2", "contact.phone",
-                             "notify_on_subscribe", "notify_on_unsubscribe",)
+                             "notify_on_subscribe", "notify_on_unsubscribe",
+                             "custom_id")
 lists_mandatory_bool_fields = ("email_type_option", )
 lists_optional_bool_fields = ("use_archive_bar", )
 lists_optional_custom_fields = {"visibility": ['pub', 'prv']}
@@ -27,7 +28,7 @@ members_mandatory_custom_fields = {"status": ['subscribed', 'unsubscribed',
 
 
 members_mandatory_bool_fields = ("email_type_option", )
-members_optional_str_fields = ('language', )
+members_optional_str_fields = ('language', 'custom_list_id' )
 members_optional_bool_fields = ("vip", )
 
 

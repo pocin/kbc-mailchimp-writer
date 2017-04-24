@@ -100,15 +100,21 @@ def _create_lists_in_batch(client, serialized_data):
 
 def _create_lists_serial(client, serialized_data):
     logging.debug('Creating lists in serial.')
+    created_lists = {}
     for data in serialized_data:
         try:
-            client.lists.create(data=data)
+            resp = client.lists.create(data=data)
+            custom_id = data.get('custom_id')
+            if custom_id:
+                created_lists[custom_id] = resp['id']
         except HTTPError as exc:
             err_resp = json.loads(exc.response.text)
             logging.error("Error while creating request:\n"
                           "POST data:\n%s"
                           "Error message\n%s", data, err_resp)
             sys.exit(1)
+
+    return created_lists
 
 def create_lists(client, csv_lists=PATH_NEW_LISTS, batch=False):
     """Create new mailing list """

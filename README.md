@@ -24,6 +24,10 @@ The writer enables:
 these columns can be used to create a mailing list:
 
 ```
+"custom_id", # string, optional; If you want to create list and fill them with
+             # contacts in one go, suppliy this column. The value is any unique
+             # custom identifier that links the list with the addresses in the 
+             # table for adding members.
  "name", #*string
  "contact.company", #*string
  "contact.address1", #*string
@@ -67,10 +71,13 @@ For exapmle the record's `vip` status will be left intact if it is already
 present and the `vip` column is not defined in the input table.
 
 ```
-    "list_id": #*string; the list where you want this member to be added
-    "status_if_new": #*string; one of ["subscribed", "unsubscribed", "cleaned", "pending", "transactional"]
+    "custom_list_id" #string, optional; if using the custom_id in the table for
+                     # creating lists, use this to reference (as a one to many relationship)
+                     # the lists you want the contact to be part of
+    "list_id", #*string; the list where you want this member to be added
+    "status_if_new", #*string; one of ["subscribed", "unsubscribed", "cleaned", "pending", "transactional"]
                      # Defineds which status will be assigned to existing email addressess
-    "email_address": #*string
+    "email_address", #*string
     "status", #*string one of ["subscribed", "unsubscribed", "cleaned", "pending", "transactional"]
     "interests.{interest_id}", #boolean
     "merge_fields.{merge_tag}", #str (see merge tags mailchimp cheatsheet)
@@ -80,6 +87,6 @@ present and the `vip` column is not defined in the input table.
 
 # TODO ISSUES
 `[]` How to deal with failed inserts (no transactions).  
-`[]` Updating or creating members vs. creating  
+`[x]` Updating or creating members vs. creating  
 `[]` Wait for batch job to complete and how to handle problematic cases  
-
+`[]` Link new-lists and new-members tables via custom\_id  
