@@ -10,12 +10,11 @@ import datetime
 import json
 import time
 from keboola import docker
-from mailchimp3 import MailChimp
 from requests import HTTPError
 from .utils import (serialize_lists_input,
                     serialize_members_input,
-                    prepare_batch_data_lists,
-                    prepare_batch_data_add_members)
+                    prepare_batch_data_add_members,
+                    _setup_client)
 
 # valid fields for creating mailing list according to
 # https://us1.api.mailchimp.com/schema/3.0/Definitions/Lists/POST.json
@@ -43,44 +42,13 @@ def set_up(path_config='/data/'):
     '''
     cfg = docker.Config(path_config)
     params = cfg.get_parameters()
+    tables = cfg.get_input_tables()
     if params.get('debug'):
         logging.basicConfig(level=logging.DEBUG)
 
     client = _setup_client(params)
-    return client
+    return client, params, tables
 
-
-def _setup_client(params):
-    """Set up mailchimp client using supplied credentials
-
-    Also verify that username and apikey are provided in json config
-    """
-    client_config = {}
-    try:
-        client_config['mc_user'] = params['username']
-    except KeyError:
-        logging.error("Please provide your mailchimp username")
-        sys.exit(1)
-    try:
-        client_config['mc_secret'] = params['#apikey']
-    except KeyError:
-        logging.error("Please provide your mailchimp apikey")
-        sys.exit(1)
-
-    client = MailChimp(**client_config)
-    # try a simple request if credentials are ok
-    logging.info("Validating credentials")
-    try:
-        client.api_root.get()
-    except HTTPError as err:
-        if err.response.status_code == 401:
-            logging.error("Invalid credentials. Check them and try again.")
-            sys.exit(1)
-        else:
-            raise
-    else:
-        logging.info("Credentials OK")
-        return client
 
 def show_lists():
     """Show existing mailing lists"""

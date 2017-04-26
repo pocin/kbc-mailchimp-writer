@@ -5,8 +5,11 @@
 from collections import defaultdict
 import csv
 import json
+from mailchimp3 import MailChimp
+from requests import HTTPError
 from .cleaning import (clean_and_validate_lists_data,
                        clean_and_validate_members_data)
+import logging
 
 
 def serialize_dotted_path_dict(cleaned_flat_data):
@@ -138,3 +141,40 @@ def prepare_batch_data_add_members(serialized_data):
         operations.append(temp)
 
     return {'operations': operations}
+
+
+def _setup_client(params, enabled=True):
+    """Set up mailchimp client using supplied credentials
+
+    Also verify that username and apikey are provided in json config
+    Args:
+        enabled (bool): for testing purposes, leave to True in prod env.
+    """
+    client_config = {'enabled': enabled}
+    try:
+        client_config['mc_user'] = params['username']
+    except KeyError:
+        raise KeyError("Please provide your mailchimp username")
+    try:
+        client_config['mc_secret'] = params['#apikey']
+    except KeyError:
+        raise KeyError(
+            "Please provide your mailchimp apikey in #encrypted format")
+
+    client = MailChimp(**client_config)
+    client = _verify_credentials(client)
+    return client
+
+def _verify_credentials(client):
+    logging.info("Validating credentials")
+    try:
+        client.api_root.get()
+    except HTTPError as err:
+        if err.response.status_code == 401:
+            raise ValueError("Invalid credentials. Check them and try again.")
+        else:
+            raise
+    else:
+        logging.info("Credentials OK")
+        return client
+

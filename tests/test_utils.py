@@ -1,11 +1,15 @@
 import pytest
 import json
 from tempfile import NamedTemporaryFile
+from mailchimp3 import MailChimp
+import requests
 from mcwriter.utils import (serialize_dotted_path_dict,
                             serialize_lists_input,
                             serialize_members_input,
                             prepare_batch_data_lists,
-                            prepare_batch_data_add_members)
+                            prepare_batch_data_add_members,
+                            _setup_client,
+                            _verify_credentials)
 
 
 def test_serializing_new_lists():
@@ -181,3 +185,46 @@ def test_preparing_batch_members_data():
          'body': json.dumps({'foo':'bar2', 'email_address': 'foo@bar.cz'})}
     ]}
     assert batch_data == expected
+
+def test_setting_up_client_works(monkeypatch):
+    params = {'username': 'mymcusername',
+              '#apikey': 'secret'}
+
+    client = _setup_client(params, enabled=False)
+    assert isinstance(client, MailChimp)
+
+
+def test_setting_up_client_fails_on_nonpresent_user(monkeypatch):
+    params = {'#apikey': 'secret'}
+    with pytest.raises(KeyError):
+        client = _setup_client(params, enabled=False)
+
+
+def test_setting_up_client_fails_on_nonpresent_apikey(monkeypatch):
+    params = {'username': 'secret'}
+    with pytest.raises(KeyError):
+        client = _setup_client(params, enabled=False)
+
+def test_veryifying_credentials_fails_on_wrong_apikey(client, monkeypatch):
+    def raise_http_error():
+        err = requests.HTTPError("WRONG!")
+        class Resp:
+            status_code = 401
+        err.response = Resp()
+        raise err
+
+    monkeypatch.setattr(client.api_root, 'get', raise_http_error)
+    with pytest.raises(ValueError):
+        _verify_credentials(client)
+
+def test_veryifying_credentials_raises_unkown_errorcode(client, monkeypatch):
+    def raise_http_error():
+        err = requests.HTTPError("WRONG! NETWORK ERROR 404")
+        class Resp:
+            status_code = 404
+        err.response = Resp()
+        raise err
+
+    monkeypatch.setattr(client.api_root, 'get', raise_http_error)
+    with pytest.raises(requests.HTTPError):
+        _verify_credentials(client)
