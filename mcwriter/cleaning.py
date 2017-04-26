@@ -34,6 +34,11 @@ members_optional_bool_fields = ("vip", )
 
 def clean_and_validate_lists_data(one_list):
     logging.debug("Cleaning one mailing list data")
+
+    if 'custom_id' in one_list and 'list_id' in one_list:
+        raise ValueError("You can't have both `custom_list_id` and `list_id` at "
+                         "the same time in your new_lists.csv")
+
     for cleaning_procedure, fields in (
             (_clean_mandatory_bool_fields, lists_mandatory_bool_fields),
             (_clean_optional_str_fields, lists_optional_str_fields),

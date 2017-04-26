@@ -260,3 +260,9 @@ def test_cleaning_and_validating_lists_data():
     }
     cleaned_data = clean_and_validate_lists_data(data)
     assert cleaned_data == expected_data
+
+
+def test_cleaning_lists_raises_if_custom_id_and_list_id():
+    one_list = {'custom_id': 'alist123', 'list_id': 'hash12foo34'}
+    with pytest.raises(ValueError):
+        clean_and_validate_lists_data(one_list)
