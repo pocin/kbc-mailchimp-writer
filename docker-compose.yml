@@ -17,6 +17,14 @@ services:
     volumes:
       - ./:/src/
 
+  testcov:
+    image: mailchimp-writer
+    tty: true
+    stdin_open: true
+    command: /bin/sh /src/run_tests.sh  --cov-report html  --cov=/src/mcwriter /src/tests
+    volumes:
+      - ./:/src/
+
   bash:
     image: mailchimp-writer
     tty: true
