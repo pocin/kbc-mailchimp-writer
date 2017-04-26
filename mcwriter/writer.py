@@ -9,6 +9,7 @@ import logging
 import datetime
 import json
 import time
+import traceback
 from keboola import docker
 from requests import HTTPError
 from .utils import (serialize_lists_input,
@@ -70,7 +71,7 @@ def _create_lists_serial(client, serialized_data):
             logging.error("Error while creating request:\n"
                           "POST data:\n%s"
                           "Error message\n%s", data, err_resp)
-            sys.exit(1)
+            raise
 
     return created_lists
 
@@ -85,8 +86,9 @@ def create_lists(client, csv_lists=PATH_NEW_LISTS):
     """
     serialized_data = serialize_lists_input(csv_lists)
     logging.debug("Creating %d new lists defined in %s", len(serialized_data), csv_lists)
-    _create_lists_serial(client=client, serialized_data=serialized_data)
+    created_lists = _create_lists_serial(client=client, serialized_data=serialized_data)
     logging.info("New lists created.")
+    return created_lists
 
 
 def update_lists(client, csv_lists=PATH_UPDATE_LISTS):
@@ -100,7 +102,6 @@ def update_lists(client, csv_lists=PATH_UPDATE_LISTS):
     _update_lists_serial(client=client, serialized_data=serialized_data)
     logging.info("Lists updated.")
 
-    # TODO add batch operations maybe?
 
 def _update_lists_serial(client, serialized_data):
     for data in serialized_data:
@@ -146,18 +147,18 @@ def _add_members_in_batch(client, serialized_data):
     except HTTPError as exc:
         err_resp = json.loads(exc.response.text)
         logging.error("Error while creating batch request:\n%s\nAborting.", err_resp)
-        sys.exit(1)
+        raise
     else:
         return response  # should contain operation_id if we later need this
 
 
-def add_members_to_lists(client, csv_members=PATH_ADD_MEMBERS, batch=False):
+def add_members_to_lists(client, csv_members=PATH_ADD_MEMBERS, batch=False, created_lists=None):
     """Add members to list. Update if they are already there.
 
     Parse data from csv (default /data/in/tables/add_members.csv)
     """
     logging.info("Adding members to list as described in %s", csv_members)
-    serialized_data = serialize_members_input(csv_members)
+    serialized_data = serialize_members_input(csv_members, created_lists)
     no_members = len(serialized_data)
     logging.info("Detected %s members to be added.", no_members)
 
@@ -165,3 +166,83 @@ def add_members_to_lists(client, csv_members=PATH_ADD_MEMBERS, batch=False):
         _add_members_serial(client, serialized_data)
     else:
         batch_response = _add_members_in_batch(client, serialized_data)
+
+
+def run_update_lists(client, params):
+    """Run the writer only updating tables
+    """
+    update_lists(
+        client,
+        csv_lists=params.get('update_lists',
+                             PATH_UPDATE_LISTS))
+
+def create_lists_add_members(client):
+    """Run the writer create tables and add members
+
+    Take input tables for
+        - creating lists
+        - adding-or-updating members in list(s)
+    and parse them in that order.
+
+    """
+
+    created_lists = create_lists(client)
+    add_members_to_lists(client, created_lists=created_lists)
+
+
+def run():
+    try:
+        client, params, tables = set_up(path_config='/data/')
+        run_writer(client, params, tables)
+    except ValueError as err:
+        print(err, file=sys.stderr)
+        sys.exit(1)
+    except Exception as err:
+        print(err, file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(2)
+
+
+def run_writer(client, params, tables):
+    """Analyze which tables are defined and act accordingly
+
+    Three combinations of input files are possible:
+
+    #. If only table `new_lists.csv` exists, the writer creates lists in the
+    table. If only table `update_lists.csv` exists, the writer updates lists in
+    mailchimp based on values defined in the input table.
+
+    #. If only table `add_members.csv` exists, the writer adds defined members
+    to existing lists. The `add_members.csv` file must contain column `list_id`
+    containing valid list id from the mailchimp website
+
+    #. if table `update_lists.csv` exists, the writer updates the defined lists
+      and exits. No adding of members occurs, do that in a new writer.
+
+    #. If you supply both tables `new_lists.csv` and `add_members.csv`; first,
+      the lists defined in `new_lists.csv` are created. Next, emails defined in
+      `add_members.csv` are added to the newly created lists based on the
+      `custom_id` column is used as a foreign key to the column
+      `custom_list_id` in `add_members.csv` table (make sure to supply both!)
+
+    """
+
+    logging.debug("Running writer")
+    tablenames = [t['full_path'] for t in tables]
+    logging.debug("Got tablenames %s", tablenames)
+    if len(tablenames) == 0:
+        raise ValueError("No input tables specified!")
+    if PATH_UPDATE_LISTS in tablenames:
+        update_lists(client)
+    elif PATH_NEW_LISTS in tablenames:
+        if len(tablenames) == 1:
+            create_lists(client=client)
+        elif len(tablenames) == 2 and PATH_ADD_MEMBERS in tablenames:
+            create_lists_add_members(client)
+        else:
+            raise ValueError("Not sure what to do, got these tables: {}".format(tables))
+    elif 'add_members.csv' in tablenames and len(tablenames) == 1:
+        add_members_to_lists(client=client)
+    else:
+        raise ValueError("Not sure what to do, got these tables: {}".format(tables))
+    logging.info("Writer finished")
