@@ -27,7 +27,7 @@ def test_adding_members_to_list_has_correct_syntax(new_members_csv, client):
     """Not sure what other things to test here..."""
     add_members_to_lists(client, new_members_csv.name, batch=False)
 
-def test_creating_lists_returns_custom_ids(client, monkeypatch):
+def test_creating_lists_returns_custom_ids(client):
     serialized_data = [{
         'name': 'a mailing list',
         'custom_id': 'custom_list_1',
@@ -40,3 +40,9 @@ def test_creating_lists_returns_custom_ids(client, monkeypatch):
     assert lists == {'custom_list_1': 'mailchimp_list_id',
                      'custom_list_2': 'mailchimp_list_id'}
 
+
+def test_creating_lists_returns_empty_dict_if_not_custom_ids(client):
+    serialized_data = [{'name': 'a mailing list'},
+                       {'name': 'a second mailing list'}]
+    lists = _create_lists_serial(client, serialized_data)
+    assert lists == {}
