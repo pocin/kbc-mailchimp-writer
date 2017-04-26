@@ -16,11 +16,11 @@ def test_adding_members_to_list_without_custom_ids(new_members_csv, client):
     """Not sure what other things to test here..."""
     add_members_to_lists(client, new_members_csv.name, batch=False, created_lists=None)
 
-def test_adding_members_to_list_with_custom_ids(new_members_csv, client):
+def test_adding_members_to_list_with_custom_ids(new_members_csv_linked_to_lists, client):
     """Not sure what other things to test here..."""
     # returned by the create_lists function
     created_lists = {'custom_list1': 'mailchimphash'}
-    add_members_to_lists(client, new_members_csv.name, batch=False,
+    add_members_to_lists(client, new_members_csv_linked_to_lists.name, batch=False,
                          created_lists=created_lists)
 
 def test_adding_members_to_list_has_correct_syntax(new_members_csv, client):
