@@ -87,11 +87,11 @@ def _clean_optional_str_fields(one_list, fields):
         try:
             if one_list[field] is None:
                 one_list[field] = ''
-                if not isinstance(one_list[field], str):
-                    raise TypeError("The string field '{}' is non-mandatory,"
-                                    " but must be a string if present. "
-                                    "Now it is '{}' in {}".format(
-                                        field, type(one_list[field]), one_list))
+            if not isinstance(one_list[field], str):
+                raise TypeError("The string field '{}' is non-mandatory,"
+                                " but must be a string if present. "
+                                "Now it is '{}' in {}".format(
+                                    field, type(one_list[field]), one_list))
         except KeyError:
             # Doesnt matter, the optional field isnt there.
             continue

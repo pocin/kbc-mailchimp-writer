@@ -53,6 +53,25 @@ def test_cleaning_mandatory_str_fields_missing_fails():
     with pytest.raises(KeyError):
         cleaned_data = _clean_mandatory_str_fields(data, lists_mandatory_str_fields)
 
+def test_cleaning_mandatory_str_fields_missing_fails_dtype():
+    data = {
+        "name": 12345,
+        "contact.company": "Nemeth",
+        "contact.address1": "Bar Bar 42",
+        "contact.city": "Foocity",
+        "contact.state": "LalaLand",
+        "contact.zip": "666",
+        "contact.country": "Ohyea",
+        "permission_reminder": "You want this!",
+        "campaign_defaults.from_name": "Me",
+        "campaign_defaults.from_email": "Me@you.together",
+        "campaign_defaults.subject": "Hi",
+        "campaign_defaults.language": "id",
+    }
+
+    with pytest.raises(TypeError):
+        cleaned_data = _clean_mandatory_str_fields(data, lists_mandatory_str_fields)
+
 def test_cleaning_optional_str_fields_missing_doesnt_raise():
     data = {
         "name": "Robin",
@@ -69,6 +88,14 @@ def test_cleaning_optional_str_fields_missing_doesnt_raise():
         "notify_on_subscribe": '',
     }
     assert expected ==_clean_optional_str_fields(data, lists_optional_str_fields)
+
+def test_cleaning_optional_str_fields_missing_raises_wrong_dtype():
+    data = {
+        "contact.address2": 12345,
+    }
+
+    with pytest.raises(TypeError):
+        _clean_optional_str_fields(data, lists_optional_str_fields)
 
 def test_cleaning_mandatory_bool_field_is_there():
     data = {
