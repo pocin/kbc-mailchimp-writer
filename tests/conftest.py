@@ -34,7 +34,7 @@ def client(monkeypatch):
 @pytest.fixture
 def new_members_csv():
     inputs = NamedTemporaryFile(delete=False)
-    inputs.write(b'''email_address,vip,interests.1234abc,interests.abc1234,status,email_type_option,merge_fields.*|FNAME|*,list_id,status_if_new
+    inputs.write(b'''email_address,vip,interests.1234abc,interests.abc1234,status,email_type,merge_fields.*|FNAME|*,list_id,status_if_new
 robin@keboola.com,true,true,true,subscribed,true,Robin,12345,subscribed
 foo@bar.com,false,true,false,pending,false,,12345,subscribed''')
     inputs.close()
@@ -43,7 +43,7 @@ foo@bar.com,false,true,false,pending,false,,12345,subscribed''')
 @pytest.fixture
 def new_members_csv_linked_to_lists():
     inputs = NamedTemporaryFile(delete=False)
-    inputs.write(b'''email_address,vip,interests.1234abc,interests.abc1234,status,email_type_option,merge_fields.*|FNAME|*,list_id,status_if_new,custom_list_id
+    inputs.write(b'''email_address,vip,interests.1234abc,interests.abc1234,status,email_type,merge_fields.*|FNAME|*,list_id,status_if_new,custom_list_id
 robin@keboola.com,true,true,true,subscribed,true,Robin,12345,subscribed,custom_list1
 foo@bar.com,false,true,false,pending,false,,12345,subscribed,custom_list1''')
     inputs.close()

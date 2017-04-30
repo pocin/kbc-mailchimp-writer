@@ -50,7 +50,7 @@ def test_cleaning_members_data_all_options_succeeds():
         'status': 'subscribed',
         'status_if_new': 'subscribed',
         'vip': 'true',
-        'email_type_option': 'true',
+        'email_type': 'true',
         'language': 'en',
         'interests.abc1234': 'true',
         'interests.abc1235': 'false'
@@ -61,7 +61,7 @@ def test_cleaning_members_data_all_options_succeeds():
         'status': 'subscribed',
         'status_if_new': 'subscribed',
         'vip': True,
-        'email_type_option': True,
+        'email_type': True,
         'language': 'en',
         'interests.abc1234': True,
         'interests.abc1235': False,
@@ -76,7 +76,7 @@ def test_cleaning_members_data_all_options_raises_on_invalid_interest_id():
         'status': 'subscribed',
         'status_if_new': 'subscribed',
         'vip': 'true',
-        'email_type_option': 'true',
+        'email_type': 'true',
         'language': 'en',
         'interests.abc1#234': 'true'
         }
@@ -91,7 +91,7 @@ def test_cleaning_members_data_all_options_raises_on_missing_list_id():
         'status_if_new': 'subscribed',
         # Missing list_id
         'vip': 'true',
-        'email_type_option': 'true',
+        'email_type': 'true',
         'language': 'en',
         'interests.abc1234': 'true'
         }
@@ -103,7 +103,7 @@ def test_cleaning_members_data_all_options_raises_on_missing_email():
     data = {
         'status': 'subscribed',
         'vip': 'true',
-        'email_type_option': 'true',
+        'email_type': 'true',
         'language': 'en',
         'interests.abc1#234': 'true'
         }

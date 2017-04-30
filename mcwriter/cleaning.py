@@ -27,9 +27,9 @@ members_mandatory_custom_fields = {"status": ['subscribed', 'unsubscribed',
                                                      'transactional']}
 
 
-members_mandatory_bool_fields = ("email_type_option", )
+members_mandatory_bool_fields = tuple()
 members_optional_str_fields = ('language', 'custom_list_id' )
-members_optional_bool_fields = ("vip", )
+members_optional_bool_fields = ("vip", "email_type")
 
 
 def clean_and_validate_lists_data(one_list):
@@ -69,7 +69,7 @@ def _clean_mandatory_str_fields(one_list, fields):
             value = one_list[field]
         except KeyError:
             raise KeyError(
-                "Every list must have str {} field. This entry doesnt: {}".format(
+                "Every entry must have str {} field. This entry doesnt: {}".format(
                 field, one_list))
         else:
             if not isinstance(value, str):
@@ -141,6 +141,8 @@ def _clean_optional_bool_fields(one_list, fields):
             # For the api, we need to turn strings that appear as true/false into
             # python True/False dtypes
             value_clean = one_list[field].lower()
+        except KeyError:
+            continue
         except AttributeError:
             # it is None, True, or False
             one_list[field] = bool(one_list[field])

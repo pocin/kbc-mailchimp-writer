@@ -155,7 +155,7 @@ def test_serializing_members_input(new_members_csv):
              'abc1234': True},
          'status': 'subscribed',
          'status_if_new': 'subscribed',
-         'email_type_option': True,
+         'email_type': True,
          'subscriber_hash': 'a2a362ca5ce6dc7e069b6f7323342079',  #md5 hash
          'merge_fields': {'*|FNAME|*': 'Robin'},
         },
@@ -168,7 +168,7 @@ def test_serializing_members_input(new_members_csv):
          'status': 'pending',
          'status_if_new': 'subscribed',
          'subscriber_hash': 'f3ada405ce890b6f8204094deb12d8a8',  #md5 hash
-         'email_type_option': False,
+         'email_type': False,
          'merge_fields': {'*|FNAME|*': ''},
         }
     ]
@@ -189,7 +189,7 @@ def test_serializing_members_input_linked_to_lists(new_members_csv_linked_to_lis
              'abc1234': True},
          'status': 'subscribed',
          'status_if_new': 'subscribed',
-         'email_type_option': True,
+         'email_type': True,
          'subscriber_hash': 'a2a362ca5ce6dc7e069b6f7323342079',  #md5 hash
          'merge_fields': {'*|FNAME|*': 'Robin'},
         },
@@ -202,7 +202,7 @@ def test_serializing_members_input_linked_to_lists(new_members_csv_linked_to_lis
          'status': 'pending',
          'status_if_new': 'subscribed',
          'subscriber_hash': 'f3ada405ce890b6f8204094deb12d8a8',  #md5 hash
-         'email_type_option': False,
+         'email_type': False,
          'merge_fields': {'*|FNAME|*': ''},
         }
     ]
