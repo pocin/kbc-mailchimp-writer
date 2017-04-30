@@ -183,7 +183,9 @@ def run_update_lists(client, csv_lists):
     """
     update_lists(client, csv_lists=csv_lists)
 
-def create_lists_add_members(client):
+def create_lists_add_members(client,
+                             csv_lists=PATH_NEW_LISTS,
+                             csv_members=PATH_ADD_MEMBERS):
     """Run the writer create tables and add members
 
     Take input tables for
@@ -193,8 +195,9 @@ def create_lists_add_members(client):
 
     """
 
-    created_lists = create_lists(client)
-    add_members_to_lists(client, created_lists=created_lists)
+    created_lists = create_lists(client, csv_lists=csv_lists)
+    add_members_to_lists(client, csv_members=csv_members,
+                         created_lists=created_lists)
 
 
 def run():
@@ -213,7 +216,7 @@ def run():
 def run_writer(client, params, tables):
     """Analyze which tables are defined and act accordingly
 
-    Three combinations of input files are possible:
+    Four combinations of input files are possible:
 
     #. If only table `new_lists.csv` exists, the writer creates lists in the
     table. If only table `update_lists.csv` exists, the writer updates lists in
@@ -240,12 +243,14 @@ def run_writer(client, params, tables):
     if len(tablenames) == 0:
         raise ValueError("No input tables specified!")
     if PATH_UPDATE_LISTS in tablenames:
-        update_lists(client)
+        update_lists(client, csv_lists=PATH_UPDATE_LISTS)
     elif PATH_NEW_LISTS in tablenames:
         if len(tablenames) == 1:
-            create_lists(client=client)
+            create_lists(client=client, csv_lists=PATH_NEW_LISTS)
         elif len(tablenames) == 2 and PATH_ADD_MEMBERS in tablenames:
-            create_lists_add_members(client)
+            create_lists_add_members(client,
+                                     csv_lists=PATH_NEW_LISTS,
+                                     csv_members=PATH_ADD_MEMBERS)
         else:
             raise ValueError("Not sure what to do, got these tables: {}".format(tables))
     elif 'add_members.csv' in tablenames and len(tablenames) == 1:
