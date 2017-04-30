@@ -5,12 +5,13 @@
 from collections import defaultdict
 import csv
 import json
+import time
+import logging
 from mailchimp3 import MailChimp
 from requests import HTTPError
 from .cleaning import (clean_and_validate_lists_data,
                        clean_and_validate_members_data)
-import logging
-
+BATCH_POLLING_DELAY = 5 #seconds
 
 def serialize_dotted_path_dict(cleaned_flat_data):
     """Convert fields from csv file into required nested format
@@ -177,4 +178,27 @@ def _verify_credentials(client):
     else:
         logging.info("Credentials OK")
         return client
+
+def batch_still_pending(batch_response):
+    if batch_response['status'] == 'finished':
+        return False
+    else:
+        return True
+
+
+def wait_for_batch_to_finish(client, batch_id, api_delay=BATCH_POLLING_DELAY):
+    batch_status = client.batches.get(batch_id)
+    while batch_still_pending(batch_status):
+        batch_status = client.batches.get(batch_id)
+        time.sleep(api_delay)
+    else:
+        logging.info("Batch %s finished.\n"
+                     "total_operations: %s"
+                     "erorred_opeartions: %s",
+                     batch_status['id'],
+                     batch_status['total_operations'],
+                     batch_status['finished_operations'])
+        return batch_status
+
+
 

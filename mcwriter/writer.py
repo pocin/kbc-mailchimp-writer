@@ -15,7 +15,8 @@ from requests import HTTPError
 from .utils import (serialize_lists_input,
                     serialize_members_input,
                     prepare_batch_data_add_members,
-                    _setup_client)
+                    _setup_client,
+                    wait_for_batch_to_finish)
 
 # valid fields for creating mailing list according to
 # https://us1.api.mailchimp.com/schema/3.0/Definitions/Lists/POST.json
@@ -142,14 +143,14 @@ def _add_members_in_batch(client, serialized_data):
 
     operations = prepare_batch_data_add_members(serialized_data)
     try:
-        response = client.batches.create(data=operations)
-        logging.debug("Got batch response: %s", response)
+        batch_response = client.batches.create(data=operations)
+        logging.debug("Got batch response: %s", batch_response)
     except HTTPError as exc:
         err_resp = json.loads(exc.response.text)
         logging.error("Error while creating batch request:\n%s\nAborting.", err_resp)
         raise
     else:
-        return response  # should contain operation_id if we later need this
+        return batch_response  # should contain operation_id if we later need this
 
 
 def add_members_to_lists(client, csv_members=PATH_ADD_MEMBERS, batch=False, created_lists=None):
@@ -166,15 +167,21 @@ def add_members_to_lists(client, csv_members=PATH_ADD_MEMBERS, batch=False, crea
         _add_members_serial(client, serialized_data)
     else:
         batch_response = _add_members_in_batch(client, serialized_data)
+        wait_for_batch_to_finish(client, batch_id=batch_response['id'],
+                                 api_delay=5)
 
 
-def run_update_lists(client, params):
+
+def run_update_lists(client, csv_lists):
     """Run the writer only updating tables
+
+    The reason for the wrapper function is that sometimes in the future we
+    might want to implement batch updating of lists
+    Args:
+        client: a mailchimp3.MailChimp instance
+        csv_lists: path/to/update_lists.csv
     """
-    update_lists(
-        client,
-        csv_lists=params.get('update_lists',
-                             PATH_UPDATE_LISTS))
+    update_lists(client, csv_lists=csv_lists)
 
 def create_lists_add_members(client):
     """Run the writer create tables and add members

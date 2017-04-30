@@ -2,6 +2,7 @@ import pytest
 import json
 from tempfile import NamedTemporaryFile
 from mailchimp3 import MailChimp
+from unittest.mock import Mock
 import requests
 from mcwriter.utils import (serialize_dotted_path_dict,
                             serialize_lists_input,
@@ -9,8 +10,54 @@ from mcwriter.utils import (serialize_dotted_path_dict,
                             prepare_batch_data_lists,
                             prepare_batch_data_add_members,
                             _setup_client,
-                            _verify_credentials)
+                            _verify_credentials,
+                            batch_still_pending,
+                            wait_for_batch_to_finish)
 
+@pytest.fixture
+def finished_batch_response():
+    return {
+        '_links': [{'href': 'https://us15.api.mailchimp.com/3.0/batches',
+                    'method': 'GET',
+                    'rel': 'parent',
+                    'schema': 'https://us15.api.mailchimp.com/schema/3.0/CollectionLinks/Batches.json',
+                    'targetSchema': 'https://us15.api.mailchimp.com/schema/3.0/Definitions/Batches/CollectionResponse.json'},
+                   {'href': 'https://us15.api.mailchimp.com/3.0/batches/a3bb03520b',
+                    'method': 'GET',
+                    'rel': 'self',
+                    'targetSchema': 'https://us15.api.mailchimp.com/schema/3.0/Definitions/Batches/Response.json'},
+                   {'href': 'https://us15.api.mailchimp.com/3.0/batches/a3bb03520b',
+                    'method': 'DELETE',
+                    'rel': 'delete'}],
+        'completed_at': '2017-04-21T11:08:22+00:00',
+        'errored_operations': 1,
+        'finished_operations': 2,
+        'id': 'a3bb03520b',
+        'response_body_url': 'https://mailchimp-api-batch.s3.amazonaws.com/a3bb03520b-response.tar.gz?AWSAccessKeyId=AKIAJWOH5BECJQZIEWNQ&Expires=1492773508&Signature=Z2WnBzKxILiuOqW%2FGHa66IqRhM8%3D',
+        'status': 'finished',
+        'submitted_at': '2017-04-21T11:08:15+00:00',
+        'total_operations': 3}
+
+@pytest.fixture
+def pending_batch_response():
+    return {
+        '_links': [{'href': 'https://us15.api.mailchimp.com/3.0/batches',
+                    'method': 'GET',
+                    'rel': 'parent',
+                    'schema': 'https://us15.api.mailchimp.com/schema/3.0/CollectionLinks/Batches.json',
+                    'targetSchema': 'https://us15.api.mailchimp.com/schema/3.0/Definitions/Batches/CollectionResponse.json'},
+                   {'href': 'https://us15.api.mailchimp.com/3.0/batches/a3bb03520b',
+                    'method': 'GET',
+                    'rel': 'self',
+                    'targetSchema': 'https://us15.api.mailchimp.com/schema/3.0/Definitions/Batches/Response.json'},
+                   {'href': 'https://us15.api.mailchimp.com/3.0/batches/a3bb03520b',
+                    'method': 'DELETE',
+                    'rel': 'delete'}],
+        'id': 'a3bb03520b',
+        'response_body_url': 'https://mailchimp-api-batch.s3.amazonaws.com/a3bb03520b-response.tar.gz?AWSAccessKeyId=AKIAJWOH5BECJQZIEWNQ&Expires=1492773508&Signature=Z2WnBzKxILiuOqW%2FGHa66IqRhM8%3D',
+        'status': 'pending',
+        'submitted_at': '2017-04-21T11:08:15+00:00',
+        'total_operations': 3}
 
 def test_serializing_new_lists():
     flat = {'name': 'Robin',
@@ -228,3 +275,24 @@ def test_veryifying_credentials_raises_unkown_errorcode(client, monkeypatch):
     monkeypatch.setattr(client.api_root, 'get', raise_http_error)
     with pytest.raises(requests.HTTPError):
         _verify_credentials(client)
+
+
+def test_checking_status_of_batch_operation(pending_batch_response,
+                                            finished_batch_response):
+    assert batch_still_pending(pending_batch_response) is True
+    assert batch_still_pending(finished_batch_response) is False
+
+def test_waiting_for_batch_op_to_finish(pending_batch_response,
+                                        finished_batch_response,
+                                        monkeypatch):
+
+    fake_client_get_batch_id = Mock(
+        side_effect=[pending_batch_response, finished_batch_response])
+    monkeypatch.setattr('mailchimp3.mailchimpclient.MailChimpClient._get',
+                        fake_client_get_batch_id)
+
+    client = MailChimp('foo', 'bar')
+    batch_id = 'a3bb03520b'
+    results = wait_for_batch_to_finish(client, batch_id, api_delay=0.1)
+    assert results == finished_batch_response
+
