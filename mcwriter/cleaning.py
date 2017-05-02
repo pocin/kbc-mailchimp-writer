@@ -49,7 +49,7 @@ def clean_and_validate_lists_data(one_list):
 
 
 def clean_and_validate_members_data(one_list):
-    logging.debug("Cleaning one mailing list data")
+    logging.debug("Cleaning members data")
     for cleaning_procedure, fields in (
             (_clean_optional_str_fields, members_optional_str_fields),
             (_clean_optional_bool_fields, members_optional_bool_fields),

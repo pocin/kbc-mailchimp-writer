@@ -99,6 +99,7 @@ def test_cleaning_members_data_all_options_raises_on_missing_list_id():
     with pytest.raises(KeyError):
         clean_and_validate_members_data(data)
 
+
 def test_cleaning_members_data_all_options_raises_on_missing_email():
     data = {
         'status': 'subscribed',
@@ -158,3 +159,4 @@ def test_cleaning_members_merge_fields_raises_on_invalid_syntax():
 
     with pytest.raises(ValueError):
         _clean_members_merge_fields(data)
+
