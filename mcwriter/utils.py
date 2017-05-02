@@ -73,10 +73,10 @@ def serialize_members_input(path, created_lists=None):
     with open(path, 'r') as lists:
         reader = csv.DictReader(lists)
         for line in reader:
-            cleaned_flat_data = clean_and_validate_members_data(line)
             if created_lists:
-                mailchimp_list_id = created_lists[cleaned_flat_data.pop('custom_list_id')]
-                cleaned_flat_data['list_id'] = mailchimp_list_id
+                mailchimp_list_id = created_lists[line.pop('custom_list_id')]
+                line['list_id'] = mailchimp_list_id
+            cleaned_flat_data = clean_and_validate_members_data(line)
             serialized_line = serialize_dotted_path_dict(cleaned_flat_data)
             serialized.append(serialized_line)
     return serialized
