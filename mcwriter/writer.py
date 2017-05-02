@@ -153,7 +153,7 @@ def _add_members_in_batch(client, serialized_data):
         return batch_response  # should contain operation_id if we later need this
 
 
-def add_members_to_lists(client, csv_members=PATH_ADD_MEMBERS, batch=False, created_lists=None):
+def add_members_to_lists(client, csv_members=PATH_ADD_MEMBERS, batch=None, created_lists=None):
     """Add members to list. Update if they are already there.
 
     Parse data from csv (default /data/in/tables/add_members.csv)
@@ -163,11 +163,11 @@ def add_members_to_lists(client, csv_members=PATH_ADD_MEMBERS, batch=False, crea
     no_members = len(serialized_data)
     logging.info("Detected %s members to be added.", no_members)
 
-    if no_members <= BATCH_THRESHOLD or not batch:
+    if no_members <= BATCH_THRESHOLD and (batch is None or batch is False):
         _add_members_serial(client, serialized_data)
     else:
         batch_response = _add_members_in_batch(client, serialized_data)
-        wait_for_batch_to_finish(client, batch_id=batch_response['id'],
+        batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
                                  api_delay=5)
 
 
