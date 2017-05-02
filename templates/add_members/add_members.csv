@@ -1,0 +1,6 @@
+list_id,status_if_new,email_address,status,language,vip
+5e86061ed6,subscribed,products@mednemeth.cz,subscribed,en,FALSE
+5e86061ed6,subscribed,robin@keboola.com,subscribed,en,FALSE
+5e86061ed6,subscribed,koupit@mednemeth.cz,subscribed,en,TRUE
+5e86061ed6,subscribed,med@mednemeth.cz,subscribed,en,FALSE
+5e86061ed6,subscribed,info@mednemeth.cz,subscribed,en,TRUE
