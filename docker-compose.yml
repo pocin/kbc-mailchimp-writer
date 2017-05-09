@@ -5,7 +5,7 @@ services:
     image: mailchimp-writer
     tty: true
     stdin_open: true
-    command: /bin/sh /src/run_tests.sh
+    entrypoint: /bin/sh /src/run_tests.sh
     volumes:
       - ./:/src/
 
@@ -13,7 +13,7 @@ services:
     image: mailchimp-writer
     tty: true
     stdin_open: true
-    command: /bin/sh /src/run_tests.sh -vv
+    entrypoint: /bin/sh /src/run_tests.sh -vv
     volumes:
       - ./:/src/
 
@@ -21,7 +21,7 @@ services:
     image: mailchimp-writer
     tty: true
     stdin_open: true
-    command: /bin/sh /src/run_tests.sh  --cov-report html  --cov=/src/mcwriter /src/tests
+    entrypoint: /bin/sh /src/run_tests.sh  --cov-report html  --cov=/src/mcwriter /src/tests
     volumes:
       - ./:/src/
 
@@ -29,6 +29,6 @@ services:
     image: mailchimp-writer
     tty: true
     stdin_open: true
-    command: /bin/bash
+    entrypoint: /bin/bash
     volumes:
       - ./:/src/
