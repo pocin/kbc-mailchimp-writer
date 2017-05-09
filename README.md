@@ -1,15 +1,25 @@
-# Tasks
 # About
+![Mailchimp logo](media/mc_logo_64.png)
+
 Keboola connection mailchimp writer
 
 # Resources
-Implement as an Keboola extension: https://developers.keboola.com/extend/docker/
-API DOCS here v3 here:
-http://developer.mailchimp.com/documentation/mailchimp/guides/get-started-with-mailchimp-api-3/
-
-https://github.com/charlesthk/python-mailchimp
+Implement as
+an [Keboola extension](https://developers.keboola.com/extend/docker/) Check out
+complete
+[Mailchimp API v3 docs](http://developer.mailchimp.com/documentation/mailchimp/guides/get-started-with-mailchimp-api-3/)
+if you are unsure about some fields:
 
 # Configuration
+Only your Mailchimp api encrypted key ([Obtain here](https://admin.mailchimp.com/account/api/)) is required 
+```javascript
+/data/config
+{
+    #apikey: "===KEBOOLA-ENCRYPTED-APIKEY-FOOBAR12345"
+}
+
+```
+
 The writer enables:
 1. Creation of new mailing lists
 2. Updating details of existing mailing lists
@@ -17,6 +27,8 @@ The writer enables:
 
 The tables you provide determine the actions the writer will take. See below for
 the actual table structures.
+
+[See here for examples](templates)
 
 | Supplied tables                    | Action                                                                                                           |
 | ----------------                   | --------                                                                                                         |
