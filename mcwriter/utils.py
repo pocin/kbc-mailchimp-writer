@@ -200,7 +200,7 @@ def wait_for_batch_to_finish(client, batch_id, api_delay=BATCH_POLLING_DELAY):
                      "all data: %s",
                      batch_status['id'],
                      batch_status['total_operations'],
-                     batch_status['erorred_operations'],
+                     batch_status['errored_operations'],
                      batch_status['finished_operations'],
                      batch_status)
         return batch_status
