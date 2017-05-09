@@ -1,7 +1,6 @@
 # Tasks
 # About
-Mailchimp writer should be able to create and manage mailing lists. Managing
-includes updating and removing email addresses.
+Keboola connection mailchimp writer
 
 # Resources
 Implement as an Keboola extension: https://developers.keboola.com/extend/docker/
@@ -12,11 +11,19 @@ https://github.com/charlesthk/python-mailchimp
 
 # Configuration
 The writer enables:
-
 1. Creation of new mailing lists
 2. Updating details of existing mailing lists
 3. Adding and editing email addresses in mailing lists
 
+The tables you provide determine the actions the writer will take. See below for
+the actual table structures.
+
+| Supplied tables                    | Action                                                                                                           |
+| ----------------                   | --------                                                                                                         |
+| `update_lists.csv`                 | Update existing lists.                                                                                           |
+| `new_lists.csv`                    | Add lists                                                                                                        |
+| `add_members.csv`                  | Add members to existing lists                                                                                    |
+| `new_lists.csv`, `add_members.csv` | Create lists defined in the `new_lists.csv`, then use the `custom_list_id` to add members to newly created lists |
 
 ## Creation of new mailing lists
 [According to the mailchimp v3 API](http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists),
@@ -58,18 +65,29 @@ must be either `true` or `false` (empty string is treaded as `false`). You can
 completely left out the non-mandatory columns from the csv.
 
 ## Updating of existing mailing lists
+Same columns as in `new_lists.csv`, however you should name the table `updated_lists.csv` in the input mapping.
 
-## Adding members to existing lists
+## Adding members to lists
 
 [The Mailchimp API](http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/#edit-put_lists_list_id_members_subscriber_hash) describes
 what fields and their values can be used to add-or-update members to lists. Here
 are the most important ones. Again, starred `*` fields are required, nested
-values are separated with dot.
+values are separated with dot. The input table has to be named `add_members.csv` (define in the input mapping).
 
 Members which are already in given list will be updated (only supplied values.
 For exapmle the record's `vip` status will be left intact if it is already
 present and the `vip` column is not defined in the input table.
 
+### Adding members to newly created lists
+Use column `custom_list_id` in the input table, which references the column
+`custom_id` in the `new_lists.csv` In this case, do not use the column `list_id`
+in the `add_members.csv`
+
+### Adding members to already existing lists
+Use column `custom_list_id` in the input table, which references the column
+`custom_id` in the `new_lists.csv`
+
+### Columns
 ```
     "custom_list_id" #string, optional; if using the custom_id in the table for
                      # creating lists, use this to reference (as a one to many relationship)
@@ -86,7 +104,7 @@ present and the `vip` column is not defined in the input table.
 ```
 
 # TODO ISSUES
-`[]` How to deal with failed inserts (no transactions).  
+`[x]` How to deal with failed inserts (no transactions).  
 `[x]` Updating or creating members vs. creating  
-`[]` Wait for batch job to complete and how to handle problematic cases  
-`[]` Link new-lists and new-members tables via custom\_id  
+`[x]` Wait for batch job to complete and how to handle problematic cases  
+`[x]` Link new-lists and new-members tables via custom\_id  
