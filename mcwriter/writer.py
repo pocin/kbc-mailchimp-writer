@@ -253,7 +253,7 @@ def run_writer(client, params, tables):
                                      csv_members=PATH_ADD_MEMBERS)
         else:
             raise ValueError("Not sure what to do, got these tables: {}".format(tables))
-    elif 'add_members.csv' in tablenames and len(tablenames) == 1:
+    elif PATH_ADD_MEMBERS in tablenames and len(tablenames) == 1:
         add_members_to_lists(client=client)
     else:
         raise ValueError("Not sure what to do, got these tables: {}".format(tables))
