@@ -234,21 +234,13 @@ def test_preparing_batch_members_data():
     assert batch_data == expected
 
 def test_setting_up_client_works(monkeypatch):
-    params = {'username': 'mymcusername',
-              '#apikey': 'secret'}
-
+    params = {'#apikey': 'secret'}
     client = _setup_client(params, enabled=False)
     assert isinstance(client, MailChimp)
 
 
-def test_setting_up_client_fails_on_nonpresent_user(monkeypatch):
-    params = {'#apikey': 'secret'}
-    with pytest.raises(KeyError):
-        client = _setup_client(params, enabled=False)
-
-
 def test_setting_up_client_fails_on_nonpresent_apikey(monkeypatch):
-    params = {'username': 'secret'}
+    params = {}
     with pytest.raises(KeyError):
         client = _setup_client(params, enabled=False)
 

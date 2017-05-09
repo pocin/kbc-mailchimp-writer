@@ -151,11 +151,8 @@ def _setup_client(params, enabled=True):
     Args:
         enabled (bool): for testing purposes, leave to True in prod env.
     """
-    client_config = {'enabled': enabled}
-    try:
-        client_config['mc_user'] = params['username']
-    except KeyError:
-        raise KeyError("Please provide your mailchimp username")
+    client_config = {'enabled': enabled,
+                     'mc_user': ""} # empty string is ok for username
     try:
         client_config['mc_secret'] = params['#apikey']
     except KeyError:
