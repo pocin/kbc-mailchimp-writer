@@ -2,7 +2,7 @@ version: "2"
 
 services:
   tests:
-    image: mailchimp-writer
+    image: pocin/kbc-mailchimp-writer:0.1.0
     tty: true
     stdin_open: true
     entrypoint: /bin/sh /src/run_tests.sh
@@ -10,7 +10,7 @@ services:
       - ./:/src/
 
   testsvv:
-    image: mailchimp-writer
+    image: pocin/kbc-mailchimp-writer:0.1.0
     tty: true
     stdin_open: true
     entrypoint: /bin/sh /src/run_tests.sh -vv
@@ -18,7 +18,7 @@ services:
       - ./:/src/
 
   testcov:
-    image: mailchimp-writer
+    image: pocin/kbc-mailchimp-writer:0.1.0
     tty: true
     stdin_open: true
     entrypoint: /bin/sh /src/run_tests.sh  --cov-report html  --cov=/src/mcwriter /src/tests
@@ -26,7 +26,7 @@ services:
       - ./:/src/
 
   bash:
-    image: mailchimp-writer
+    image: pocin/kbc-mailchimp-writer:0.1.0
     tty: true
     stdin_open: true
     entrypoint: /bin/bash
