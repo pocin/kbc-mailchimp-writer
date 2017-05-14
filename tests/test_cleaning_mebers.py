@@ -3,6 +3,7 @@ import pytest
 from mcwriter.cleaning import (_clean_mandatory_custom_fields,
                                clean_and_validate_members_data,
                                _clean_members_interests,
+                               _clean_exclusive_fields,
                                _clean_members_merge_fields,
                                members_mandatory_custom_fields)
 
@@ -160,3 +161,12 @@ def test_cleaning_members_merge_fields_raises_on_invalid_syntax():
     with pytest.raises(ValueError):
         _clean_members_merge_fields(data)
 
+def test_providing_custom_list_id_and_list_id_raises():
+    data = {
+        'email_address': 'robin@keboola.com',
+        'custom_list_id': 'foobar',
+        'list_id': '123abc',
+    }
+    exclusive_fields = {'custom_list_id', 'list_id'}
+    with pytest.raises(ValueError):
+        _clean_exclusive_fields(data, exclusive_fields)

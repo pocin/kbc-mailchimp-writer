@@ -16,7 +16,7 @@ lists_optional_str_fields = ("contact.address2", "contact.phone",
 lists_mandatory_bool_fields = ("email_type_option", )
 lists_optional_bool_fields = ("use_archive_bar", )
 lists_optional_custom_fields = {"visibility": ['pub', 'prv']}
-
+lists_exclusive_fields = set(('list_id', 'custom_id'))
 # fields for adding members
 members_mandatory_str_fields = ('email_address', 'list_id')
 members_mandatory_custom_fields = {"status": ['subscribed', 'unsubscribed',
@@ -30,6 +30,7 @@ members_mandatory_custom_fields = {"status": ['subscribed', 'unsubscribed',
 members_mandatory_bool_fields = tuple()
 members_optional_str_fields = ('language', 'custom_list_id' )
 members_optional_bool_fields = ("vip", "email_type")
+members_exclusive_fields = set(('list_id', 'custom_list_id'))
 
 
 def clean_and_validate_lists_data(one_list):
@@ -40,6 +41,7 @@ def clean_and_validate_lists_data(one_list):
                          "the same time in your new_lists.csv")
 
     for cleaning_procedure, fields in (
+            (_clean_exclusive_fields, lists_exclusive_fields),
             (_clean_mandatory_bool_fields, lists_mandatory_bool_fields),
             (_clean_optional_str_fields, lists_optional_str_fields),
             (_clean_optional_bool_fields, lists_optional_bool_fields),
@@ -51,6 +53,7 @@ def clean_and_validate_lists_data(one_list):
 def clean_and_validate_members_data(one_list):
     logging.debug("Cleaning members data")
     for cleaning_procedure, fields in (
+            (_clean_exclusive_fields, members_exclusive_fields),
             (_clean_optional_str_fields, members_optional_str_fields),
             (_clean_optional_bool_fields, members_optional_bool_fields),
             (_clean_mandatory_bool_fields, members_mandatory_bool_fields),
@@ -224,4 +227,14 @@ def _clean_members_merge_fields(one_list):
         else:
             ok_fields.append(field)
     return _clean_optional_str_fields(one_list, ok_fields)
+
+def _clean_exclusive_fields(one_list, exclusive_fields):
+    if exclusive_fields.issubset(set(one_list)):
+        # both exclusive fields are there!
+        raise ValueError(
+            "It doesn't make sense to provide both {} in the row '{}'".format(
+                exclusive_fields, one_list))
+    else:
+        return one_list
+
 
