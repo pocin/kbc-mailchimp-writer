@@ -8,3 +8,6 @@ testcov:
 
 bash:
 	docker-compose run --rm -e KBC_DATADIR=/src/tests/data/ bash
+
+build:
+	docker build -t pocin/kbc-mailchimp-writer .
