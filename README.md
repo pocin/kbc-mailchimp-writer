@@ -13,7 +13,6 @@ if you are unsure about some fields:
 # Configuration
 Only your Mailchimp api encrypted key ([Obtain here](https://admin.mailchimp.com/account/api/)) is required 
 ```javascript
-/data/config
 {
     #apikey: "===KEBOOLA-ENCRYPTED-APIKEY-FOOBAR12345"
 }
@@ -22,13 +21,14 @@ Only your Mailchimp api encrypted key ([Obtain here](https://admin.mailchimp.com
 
 The writer enables:
 1. Creation of new mailing lists
+
 2. Updating details of existing mailing lists
+
 3. Adding and editing email addresses in mailing lists
 
-The tables you provide determine the actions the writer will take. See below for
-the actual table structures.
-
-[See here for examples](templates)
+**The tables you provide determine the writer's behavior**. See below for the
+actual table structures, [See here for actual examples](templates). 
+For the sake of clarity, the **input tablenames are hardcoded** and you can't change that.
 
 | Supplied tables                    | Action                                                                                                           |
 | ----------------                   | --------                                                                                                         |
@@ -36,6 +36,11 @@ the actual table structures.
 | `new_lists.csv`                    | Add lists                                                                                                        |
 | `add_members.csv`                  | Add members to existing lists                                                                                    |
 | `new_lists.csv`, `add_members.csv` | Create lists defined in the `new_lists.csv`, then use the `custom_list_id` to add members to newly created lists |
+
+
+- Fields marked with `*` (below) are mandatory
+- You can completely left out the non-mandatory columns from the csv.
+- Boolean values must be either `true` or `false` (empty string is treated as `false`).
 
 ## Creation of new mailing lists
 [According to the mailchimp v3 API](http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists),
@@ -72,10 +77,6 @@ Each keyword should be a column name in the `new_lists.csv` input file
 ([see the template](./templates/new_lists.csv)). Each row represents a new
 mailing list.
 
-Fields marked with `*` are required. Strings can be empty `''`. Boolean values
-must be either `true` or `false` (empty string is treaded as `false`). You can
-completely left out the non-mandatory columns from the csv.
-
 ## Updating of existing mailing lists
 Same columns as in `new_lists.csv`, however you should name the table `updated_lists.csv` in the input mapping.
 
@@ -89,15 +90,6 @@ values are separated with dot. The input table has to be named `add_members.csv`
 Members which are already in given list will be updated (only supplied values.
 For exapmle the record's `vip` status will be left intact if it is already
 present and the `vip` column is not defined in the input table.
-
-### Adding members to newly created lists
-Use column `custom_list_id` in the input table, which references the column
-`custom_id` in the `new_lists.csv` In this case, do not use the column `list_id`
-in the `add_members.csv`
-
-### Adding members to already existing lists
-Use column `custom_list_id` in the input table, which references the column
-`custom_id` in the `new_lists.csv`
 
 ### Columns
 ```
@@ -115,8 +107,10 @@ Use column `custom_list_id` in the input table, which references the column
     "vip", #boolean
 ```
 
-# TODO ISSUES
-`[x]` How to deal with failed inserts (no transactions).  
-`[x]` Updating or creating members vs. creating  
-`[x]` Wait for batch job to complete and how to handle problematic cases  
-`[x]` Link new-lists and new-members tables via custom\_id  
+### Adding members to newly created lists
+Use column `custom_list_id` in the `add_members.csv` input table, which references the column
+`custom_list_id` in the `new_lists.csv` In this case, do not use the column `list_id`
+in neither the `add_members.csv` nor in the `new_lists.csv`
+
+### Adding members to already existing lists
+Use column `list_id` in the `add_members.csv` input table to specify the list (found in the mailchimp website).
