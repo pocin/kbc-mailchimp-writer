@@ -1,6 +1,6 @@
 VERSION=0.1.0
-IMAGE="pocin/kbc-mailchimp-writer"
-TESTCOMMAND="docker run --rm -it --entrypoint '/bin/bash' -e KBC_DATADIR='/src/tests/data/' ${IMAGE}:latest /src/run_tests.sh"
+IMAGE=pocin/kbc-mailchimp-writer
+TESTCOMMAND="docker run --rm -it --entrypoint '/bin/bash' -v `pwd`:/src/ -e KBC_DATADIR='/src/tests/data/' ${IMAGE}:latest /src/run_tests.sh"
 test:
 	eval $(TESTCOMMAND)
 
@@ -11,7 +11,7 @@ testcov:
 	$(TESTCOMMAND) --cov-report html  --cov=/src/mcwriter /src/tests
 
 getbash:
-	docker run --rm -it --entrypoint "/bin/bash" -e KBC_DATADIR=/src/tests/data/ ${IMAGE}:latest
+	docker run --rm -it --entrypoint "/bin/bash" -v `pwd`:/src/ -e KBC_DATADIR=/src/tests/data/ ${IMAGE}:latest
 
 build:
 	echo "Building ${IMAGE}:${VERSION}"
