@@ -3,14 +3,14 @@ import re
 from hashlib import md5
 
 # fields for adding lists
-lists_mandatory_str_fields = ("name", "contact.company", "contact.address1",
-                              "contact.city", "contact.state", "contact.zip",
-                              "contact.country", "permission_reminder",
-                              "campaign_defaults.from_name",
-                              "campaign_defaults.from_email",
-                              "campaign_defaults.subject",
-                              "campaign_defaults.language")
-lists_optional_str_fields = ("contact.address2", "contact.phone",
+lists_mandatory_str_fields = ("name", "contact#company", "contact#address1",
+                              "contact#city", "contact#state", "contact#zip",
+                              "contact#country", "permission_reminder",
+                              "campaign_defaults#from_name",
+                              "campaign_defaults#from_email",
+                              "campaign_defaults#subject",
+                              "campaign_defaults#language")
+lists_optional_str_fields = ("contact#address2", "contact#phone",
                              "notify_on_subscribe", "notify_on_unsubscribe",
                              "custom_id")
 lists_mandatory_bool_fields = ("email_type_option", )
@@ -43,6 +43,7 @@ def clean_and_validate_lists_data(one_list):
     for cleaning_procedure, fields in (
             (_clean_exclusive_fields, lists_exclusive_fields),
             (_clean_mandatory_bool_fields, lists_mandatory_bool_fields),
+            (_clean_mandatory_str_fields, lists_mandatory_str_fields ),
             (_clean_optional_str_fields, lists_optional_str_fields),
             (_clean_optional_bool_fields, lists_optional_bool_fields),
             (_clean_optional_custom_fields, lists_optional_custom_fields)):
@@ -204,26 +205,28 @@ def _clean_mandatory_custom_fields(one_list, fields):
 
 
 def _clean_members_interests(one_list):
-    pattern = re.compile(r'^interests\.[0-9a-zA-Z]+$')
+    interests_pattern = r'^interests#[0-9a-zA-Z]+$'
+    pattern = re.compile(interests_pattern)
     interests = []
 
     for field in (f for f in one_list if f.startswith('interests')):
         if not pattern.match(field):
-            raise ValueError("'interests' columns must have format 'interests.[0-9a-zA-Z]+'"
-                             "not '{}'".format(field))
+            raise ValueError("'interests' columns must have format '{}'"
+                             "not '{}'".format(interests_pattern, field))
         else:
             interests.append(field)
     return _clean_optional_bool_fields(one_list, interests)
 
 
 def _clean_members_merge_fields(one_list):
-    pattern = re.compile(r'^merge_fields\.\*\|\w+\|\*$')
+    merge_field_pat = r'^merge_fields#\*\|\w+\|\*$'
+    pattern = re.compile(merge_field_pat)
     ok_fields = []
 
     for field in (f for f in one_list if f.startswith('merge_fields')):
         if not pattern.match(field):
-            raise ValueError("'merge_fields' columns must have format 'merge_fields.*|<tagName>|*'"
-                             "not '{}'".format(field))
+            raise ValueError("'merge_fields' columns must have format '{}'"
+                             "not '{}'".format(merge_field_pat, field))
         else:
             ok_fields.append(field)
     return _clean_optional_str_fields(one_list, ok_fields)

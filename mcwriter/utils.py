@@ -13,13 +13,13 @@ from .cleaning import (clean_and_validate_lists_data,
                        clean_and_validate_members_data)
 BATCH_POLLING_DELAY = 5 #seconds
 
-def serialize_dotted_path_dict(cleaned_flat_data):
+def serialize_dotted_path_dict(cleaned_flat_data, delimiter='#'):
     """Convert fields from csv file into required nested format
 
     Handles only nesting one level deep
 
     When creating a new mailing list, the POST data contains nested fields. In
-    the input csv, the nesting is marked with dotted path ('contacts.address')
+    the input csv, the nesting is marked with `delimiter` ('contacts#address')
 
     Arguments:
         flat_data (dict): A dict where keys possibly contain dotted path
@@ -29,8 +29,8 @@ def serialize_dotted_path_dict(cleaned_flat_data):
     serialized = defaultdict(dict)
 
     for key, value in cleaned_flat_data.items():
-        if '.' in key:
-            lvl1, lvl2 = key.split('.', maxsplit=1)
+        if delimiter in key:
+            lvl1, lvl2 = key.split(delimiter, maxsplit=1)
             serialized[lvl1][lvl2] = value
         else:
             serialized[key] = value

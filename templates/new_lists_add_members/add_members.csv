@@ -1,4 +1,4 @@
-custom_list_id,status_if_new,email_address,status,language,vip
+"custom_list_id","status_if_new","email_address","status","language","vip"
 wizards,subscribed,products@mednemeth.cz,subscribed,en,FALSE
 wizards,subscribed,robin@keboola.com,subscribed,en,FALSE
 wizards,subscribed,koupit@mednemeth.cz,subscribed,en,TRUE
