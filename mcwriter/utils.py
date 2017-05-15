@@ -8,7 +8,7 @@ import json
 import time
 import logging
 from mailchimp3 import MailChimp
-from requests import HTTPError
+from requests import HTTPError, ConnectionError
 from .cleaning import (clean_and_validate_lists_data,
                        clean_and_validate_members_data)
 BATCH_POLLING_DELAY = 5 #seconds
@@ -172,6 +172,8 @@ def _verify_credentials(client):
             raise ValueError("Invalid credentials. Check them and try again.")
         else:
             raise
+    except ConnectionError:
+        raise ValueError("Invalid credentials. Check them and try again.")
     else:
         logging.info("Credentials OK")
         return client

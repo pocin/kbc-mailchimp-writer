@@ -244,6 +244,7 @@ def test_setting_up_client_fails_on_nonpresent_apikey(monkeypatch):
     with pytest.raises(KeyError):
         client = _setup_client(params, enabled=False)
 
+
 def test_veryifying_credentials_fails_on_wrong_apikey(client, monkeypatch):
     def raise_http_error():
         err = requests.HTTPError("WRONG!")
@@ -253,21 +254,19 @@ def test_veryifying_credentials_fails_on_wrong_apikey(client, monkeypatch):
         raise err
 
     monkeypatch.setattr(client.api_root, 'get', raise_http_error)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as excinfo:
         _verify_credentials(client)
+    excinfo.match('Invalid credentials')
 
-def test_veryifying_credentials_raises_unkown_errorcode(client, monkeypatch):
-    def raise_http_error():
-        err = requests.HTTPError("WRONG! NETWORK ERROR 404")
-        class Resp:
-            status_code = 404
-        err.response = Resp()
-        raise err
 
-    monkeypatch.setattr(client.api_root, 'get', raise_http_error)
-    with pytest.raises(requests.HTTPError):
+def test_veryifying_credentials_wrong_apikey_ConnectionError(client, monkeypatch):
+    def raise_ConnectionError():
+        raise requests.ConnectionError("WRONG!")
+
+    monkeypatch.setattr(client.api_root, 'get', raise_ConnectionError)
+    with pytest.raises(ValueError) as excinfo:
         _verify_credentials(client)
-
+    excinfo.match('Invalid credentials')
 
 def test_checking_status_of_batch_operation(pending_batch_response,
                                             finished_batch_response):
