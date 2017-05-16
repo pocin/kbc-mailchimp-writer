@@ -10,6 +10,7 @@ import datetime
 import json
 import time
 import traceback
+from .exceptions import CleaningError
 from keboola import docker
 from requests import HTTPError
 from .utils import (serialize_lists_input,
@@ -204,7 +205,7 @@ def run():
     try:
         client, params, tables = set_up(path_config='/data/')
         run_writer(client, params, tables)
-    except ValueError as err:
+    except CleaningError as err:
         print(err, file=sys.stderr)
         sys.exit(1)
     except Exception as err:
