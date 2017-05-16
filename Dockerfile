@@ -11,6 +11,6 @@ RUN pip install --no-cache-dir --ignore-installed \
 
 COPY . /src/
 
-ENTRYPOINT python /src/main.py
+ENTRYPOINT python -u /src/main.py
 # prepare the container
 WORKDIR /home
