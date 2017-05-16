@@ -10,6 +10,7 @@ import datetime
 import json
 import time
 import traceback
+import os
 from keboola import docker
 from requests import HTTPError
 from .exceptions import UserError, ConfigError
@@ -22,9 +23,9 @@ from .utils import (serialize_lists_input,
 # valid fields for creating mailing list according to
 # https://us1.api.mailchimp.com/schema/3.0/Definitions/Lists/POST.json
 # http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists
-PATH_NEW_LISTS = '/data/in/tables/new_lists.csv'
-PATH_UPDATE_LISTS = '/data/in/tables/update_lists.csv'
-PATH_ADD_MEMBERS = '/data/in/tables/add_members.csv'
+FILE_NEW_LISTS = 'new_lists.csv'
+FILE_UPDATE_LISTS = 'update_lists.csv'
+FILE_ADD_MEMBERS = 'add_members.csv'
 BATCH_THRESHOLD = 3 # When to switch from serial jobs to batch jobs
 SEQUENTIAL_REQUEST_DELAY = 0.3 #seconds between sequential requests
 
@@ -79,7 +80,7 @@ def _create_lists_serial(client, serialized_data):
 
     return created_lists
 
-def create_lists(client, csv_lists=PATH_NEW_LISTS):
+def create_lists(client, csv_lists):
     """Create new mailing list
 
     The reason for this wrapper function is that it is possible to create lists
@@ -95,7 +96,7 @@ def create_lists(client, csv_lists=PATH_NEW_LISTS):
     return created_lists
 
 
-def update_lists(client, csv_lists=PATH_UPDATE_LISTS):
+def update_lists(client, csv_lists):
     """Update existing mailing lists
 
     the input csv file should have the same structure as for lists creation
@@ -156,7 +157,7 @@ def _add_members_in_batch(client, serialized_data):
         return batch_response  # should contain operation_id if we later need this
 
 
-def add_members_to_lists(client, csv_members=PATH_ADD_MEMBERS, batch=None, created_lists=None):
+def add_members_to_lists(client, csv_members, batch=None, created_lists=None):
     """Add members to list. Update if they are already there.
 
     Parse data from csv (default /data/in/tables/add_members.csv)
@@ -186,9 +187,7 @@ def run_update_lists(client, csv_lists):
     """
     update_lists(client, csv_lists=csv_lists)
 
-def create_lists_add_members(client,
-                             csv_lists=PATH_NEW_LISTS,
-                             csv_members=PATH_ADD_MEMBERS):
+def create_lists_add_members(client, csv_lists, csv_members):
     """Run the writer create tables and add members
 
     Take input tables for
@@ -205,8 +204,9 @@ def create_lists_add_members(client,
 
 def run():
     try:
-        client, params, tables = set_up(path_config='/data/')
-        run_writer(client, params, tables)
+        datadir = os.getenv("KBC_DATADIR")
+        client, params, tables = set_up(path_config=datadir)
+        run_writer(client, params, tables, datadir=datadir)
     except UserError as err:
         print(err, file=sys.stderr)
         sys.exit(1)
@@ -216,7 +216,7 @@ def run():
         sys.exit(2)
 
 
-def run_writer(client, params, tables):
+def run_writer(client, params, tables, datadir):
     """Analyze which tables are defined and act accordingly
 
     Four combinations of input files are possible:
@@ -241,24 +241,37 @@ def run_writer(client, params, tables):
     """
 
     logging.debug("Running writer")
-    wrong_tables_msg = "Not sure what to do, got these tables: {}".format(tables)
     tablenames = [t['full_path'] for t in tables]
     logging.debug("Got tablenames %s", tablenames)
+    path_update_lists = os.path.join(datadir, 'in/tables', FILE_UPDATE_LISTS)
+    path_new_lists = os.path.join(datadir, 'in/tables', FILE_NEW_LISTS)
+    path_add_members = os.path.join(datadir, 'in/tables', FILE_ADD_MEMBERS)
+
+    wrong_tables_msg = ("Not sure what to do, got these tables: {}"
+                        "Expecting combination of those: {} {} {}".format(
+                            tablenames,
+                            path_update_lists,
+                            path_new_lists,
+                            path_add_members))
+
     if len(tablenames) == 0:
-        raise ValueError("No input tables specified!")
-    if PATH_UPDATE_LISTS in tablenames:
-        update_lists(client, csv_lists=PATH_UPDATE_LISTS)
-    elif PATH_NEW_LISTS in tablenames:
+        raise ConfigError("No input tables specified!")
+
+    if path_update_lists in tablenames and len(tablenames) == 1:
+        update_lists(client, csv_lists=path_update_lists)
+
+    elif path_add_members in tablenames and len(tablenames) == 1:
+        add_members_to_lists(client=client, csv_members=path_add_members)
+
+    elif path_new_lists in tablenames:
         if len(tablenames) == 1:
-            create_lists(client=client, csv_lists=PATH_NEW_LISTS)
-        elif len(tablenames) == 2 and PATH_ADD_MEMBERS in tablenames:
+            create_lists(client=client, csv_lists=path_new_lists)
+        elif len(tablenames) == 2 and path_add_members in tablenames:
             create_lists_add_members(client,
-                                     csv_lists=PATH_NEW_LISTS,
-                                     csv_members=PATH_ADD_MEMBERS)
+                                     csv_lists=path_new_lists,
+                                     csv_members=path_add_members)
         else:
             raise ConfigError(wrong_tables_msg)
-    elif PATH_ADD_MEMBERS in tablenames and len(tablenames) == 1:
-        add_members_to_lists(client=client)
     else:
         raise ConfigError(wrong_tables_msg)
     logging.info("Writer finished")
