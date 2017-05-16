@@ -10,9 +10,9 @@ import datetime
 import json
 import time
 import traceback
-from .exceptions import CleaningError
 from keboola import docker
 from requests import HTTPError
+from .exceptions import UserError, ConfigError
 from .utils import (serialize_lists_input,
                     serialize_members_input,
                     prepare_batch_data_add_members,
@@ -115,7 +115,7 @@ def _update_lists_serial(client, serialized_data):
             logging.error("Error while creating request:\n"
                           "POST data:\n%s"
                           "Error message\n%s", data, err_resp)
-            sys.exit(1)
+            raise
         time.sleep(0.2)
 
     logging.info("")
@@ -134,7 +134,7 @@ def _add_members_serial(client, serialized_data):
             logging.error("Error while creating request:\n"
                           "POST data:\n%s"
                           "Error message\n%s", data, err_resp)
-            sys.exit(1)
+            raise
 
 
 def _add_members_in_batch(client, serialized_data):
@@ -205,7 +205,7 @@ def run():
     try:
         client, params, tables = set_up(path_config='/data/')
         run_writer(client, params, tables)
-    except CleaningError as err:
+    except UserError as err:
         print(err, file=sys.stderr)
         sys.exit(1)
     except Exception as err:
@@ -239,6 +239,7 @@ def run_writer(client, params, tables):
     """
 
     logging.debug("Running writer")
+    wrong_tables_msg = "Not sure what to do, got these tables: {}".format(tables)
     tablenames = [t['full_path'] for t in tables]
     logging.debug("Got tablenames %s", tablenames)
     if len(tablenames) == 0:
@@ -253,9 +254,9 @@ def run_writer(client, params, tables):
                                      csv_lists=PATH_NEW_LISTS,
                                      csv_members=PATH_ADD_MEMBERS)
         else:
-            raise ValueError("Not sure what to do, got these tables: {}".format(tables))
+            raise ConfigError(wrong_tables_msg)
     elif PATH_ADD_MEMBERS in tablenames and len(tablenames) == 1:
         add_members_to_lists(client=client)
     else:
-        raise ValueError("Not sure what to do, got these tables: {}".format(tables))
+        raise ConfigError(wrong_tables_msg)
     logging.info("Writer finished")

@@ -1,5 +1,6 @@
 import pytest
 
+from mcwriter.exceptions import MissingFieldError, CleaningError
 from mcwriter.cleaning import (_clean_mandatory_custom_fields,
                                clean_and_validate_members_data,
                                _clean_members_interests,
@@ -12,7 +13,7 @@ def test_cleaning_mandatory_custom_fields_raises_if_not_present():
         "email_address": "Robin@example.com",
     }
 
-    with pytest.raises(KeyError):
+    with pytest.raises(MissingFieldError):
         _clean_mandatory_custom_fields(data, members_mandatory_custom_fields)
 
 
@@ -40,7 +41,7 @@ def test_cleaning_mandatory_custom_fields_raises_if_invalid():
 
     }
 
-    with pytest.raises(TypeError):
+    with pytest.raises(CleaningError):
         _clean_mandatory_custom_fields(data, members_mandatory_custom_fields)
 
 
@@ -82,7 +83,7 @@ def test_cleaning_members_data_all_options_raises_on_invalid_interest_id():
         'interests__abc1_234': 'true'
         }
 
-    with pytest.raises(ValueError):
+    with pytest.raises(CleaningError):
         clean_and_validate_members_data(data)
 
 def test_cleaning_members_data_all_options_raises_on_missing_list_id():
@@ -97,7 +98,7 @@ def test_cleaning_members_data_all_options_raises_on_missing_list_id():
         'interests__abc1234': 'true'
         }
 
-    with pytest.raises(KeyError):
+    with pytest.raises(MissingFieldError):
         clean_and_validate_members_data(data)
 
 
@@ -110,7 +111,7 @@ def test_cleaning_members_data_all_options_raises_on_missing_email():
         'interests__abc1__234': 'true'
         }
 
-    with pytest.raises(KeyError):
+    with pytest.raises(MissingFieldError):
         clean_and_validate_members_data(data)
 
 
@@ -133,7 +134,7 @@ def test_cleaning_members_interests_raises_on_invalid_interest():
         'interests__abc1 234': 'true', # the space is reduntant
     }
 
-    with pytest.raises(ValueError):
+    with pytest.raises(CleaningError):
         _clean_members_interests(data)
 
 
@@ -158,7 +159,7 @@ def test_cleaning_members_merge_fields_raises_on_invalid_syntax():
         'merge_fields__*|FNAME*|': 'Robin',
     }
 
-    with pytest.raises(ValueError):
+    with pytest.raises(CleaningError):
         _clean_members_merge_fields(data)
 
 def test_providing_custom_list_id_and_list_id_raises():
@@ -168,5 +169,5 @@ def test_providing_custom_list_id_and_list_id_raises():
         'list_id': '123abc',
     }
     exclusive_fields = {'custom_list_id', 'list_id'}
-    with pytest.raises(ValueError):
+    with pytest.raises(CleaningError):
         _clean_exclusive_fields(data, exclusive_fields)

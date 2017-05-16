@@ -5,5 +5,14 @@ The final `run()` funtion captures all
 
 """
 
-class CleaningError(Exception):
+class UserError(Exception):
+    pass
+
+class ConfigError(UserError):
+    pass
+
+class CleaningError(UserError):
+    pass
+
+class MissingFieldError(CleaningError):
     pass

@@ -1,6 +1,7 @@
 import logging
 import re
 from hashlib import md5
+from .exceptions import CleaningError, MissingFieldError
 
 # fields for adding lists
 lists_mandatory_str_fields = ("name", "contact__company", "contact__address1",
@@ -36,10 +37,6 @@ members_exclusive_fields = set(('list_id', 'custom_list_id'))
 def clean_and_validate_lists_data(one_list):
     logging.debug("Cleaning one mailing list data")
 
-    if 'custom_id' in one_list and 'list_id' in one_list:
-        raise ValueError("You can't have both `custom_list_id` and `list_id` at "
-                         "the same time in your new_lists.csv")
-
     for cleaning_procedure, fields in (
             (_clean_exclusive_fields, lists_exclusive_fields),
             (_clean_mandatory_bool_fields, lists_mandatory_bool_fields),
@@ -72,12 +69,13 @@ def _clean_mandatory_str_fields(one_list, fields):
         try:
             value = one_list[field]
         except KeyError:
-            raise KeyError(
-                "Every entry must have str {} field. This entry doesnt: {}".format(
-                field, one_list))
+            raise MissingFieldError(
+                "Every entry must have str '{}' field.\n"
+                "This entry doesnt: {}".format(field, one_list))
         else:
             if not isinstance(value, str):
-                raise TypeError("Field {}:{} must be a string! It is {}".format(
+                raise CleaningError(
+                    "Field '{}:{}' must be a string! It is '{}'".format(
                     field, value, type(value)))
     return one_list
 
@@ -92,7 +90,7 @@ def _clean_optional_str_fields(one_list, fields):
             if one_list[field] is None:
                 one_list[field] = ''
             if not isinstance(one_list[field], str):
-                raise TypeError("The string field '{}' is non-mandatory,"
+                raise CleaningError("The string field '{}' is non-mandatory,"
                                 " but must be a string if present. "
                                 "Now it is '{}' in {}".format(
                                     field, type(one_list[field]), one_list))
@@ -115,8 +113,9 @@ def _clean_mandatory_bool_fields(one_list, fields):
             # python True/False dtypes
             value_clean = one_list[field].lower()
         except KeyError:
-            raise KeyError("Every list must have boolean '{}' field."
-                           " This entry doesnt: '{}'".format(field, one_list))
+            raise MissingFieldError(
+                "Every list must have boolean '{}' field."
+                " This entry doesnt: '{}'".format(field, one_list))
         except AttributeError:
             # it is None, True, or False
             one_list[field] = bool(one_list[field])
@@ -126,9 +125,10 @@ def _clean_mandatory_bool_fields(one_list, fields):
             elif value_clean == 'true':
                 one_list[field] = True
             else:
-                raise TypeError("Can't convert mandatory '{}' field to boolean."
-                                "Make sure it is either 'true' or 'false',"
-                                " not '{}'".format(field, one_list[field]))
+                raise CleaningError(
+                    "Can't convert mandatory '{}' field to boolean."
+                    "Make sure it is either 'true' or 'false',"
+                    " not '{}'".format(field, one_list[field]))
     return one_list
 
 def _clean_optional_bool_fields(one_list, fields):
@@ -156,9 +156,10 @@ def _clean_optional_bool_fields(one_list, fields):
             elif value_clean == 'true':
                 one_list[field] = True
             else:
-                raise TypeError("Can't convert optional '{}' field to boolean. "
-                                "Make sure it is either 'true' or 'false',"
-                                " not '{}'".format(field, one_list[field]))
+                raise CleaningError(
+                    "Can't convert optional '{}' field to boolean. "
+                    "Make sure it is either 'true' or 'false',"
+                    " not '{}'".format(field, one_list[field]))
     return one_list
 
 
@@ -172,12 +173,11 @@ def _clean_optional_custom_fields(one_list, fields):
     for field, expected in fields.items():
         value = one_list[field]
         if value not in expected:
-            raise TypeError("The field {field} must be one of "
-                            "{expected}. It is {value} in {data}".format(
-                                field=field,
-                                expected=expected,
-                                value=value,
-                                data=one_list))
+            raise CleaningError(
+                "The field {field} must be one of "
+                "{expected}. It is {value} in {data}".format(
+                    field=field,
+                    expected=expected, value=value, data=one_list))
     return one_list
 
 
@@ -192,15 +192,15 @@ def _clean_mandatory_custom_fields(one_list, fields):
         try:
             value = one_list[field]
         except KeyError:
-            raise KeyError("Every member must have boolean '{}' field. "
-                           "This entry doesnt: {}".format(field, one_list))
+            raise MissingFieldError(
+                "Every member must have boolean '{}' field. "
+                "This entry doesnt: {}".format(field, one_list))
         if value not in expected:
-            raise TypeError("The field '{field}' must be one of "
-                            "{expected}. It is '{value}' in {data}".format(
-                                field=field,
-                                expected=expected,
-                                value=value,
-                                data=one_list))
+            raise CleaningError(
+                "The field '{field}' must be one of "
+                "{expected}. It is '{value}' in {data}".format(
+                    field=field,
+                    expected=expected, value=value, data=one_list))
     return one_list
 
 
@@ -211,8 +211,9 @@ def _clean_members_interests(one_list):
 
     for field in (f for f in one_list if f.startswith('interests')):
         if not pattern.match(field):
-            raise ValueError("'interests' columns must have format '{}'"
-                             "not '{}'".format(interests_pattern, field))
+            raise CleaningError(
+                "'interests' columns must have format '{}'"
+                "not '{}'".format(interests_pattern, field))
         else:
             interests.append(field)
     return _clean_optional_bool_fields(one_list, interests)
@@ -225,17 +226,21 @@ def _clean_members_merge_fields(one_list):
 
     for field in (f for f in one_list if f.startswith('merge_fields')):
         if not pattern.match(field):
-            raise ValueError("'merge_fields' columns must have format '{}'"
+            raise CleaningError("'merge_fields' columns must have format '{}'"
                              "not '{}'".format(merge_field_pat, field))
         else:
             ok_fields.append(field)
     return _clean_optional_str_fields(one_list, ok_fields)
 
 def _clean_exclusive_fields(one_list, exclusive_fields):
+    """
+    Validate that the data doesn't contain both fields
+    """
     if exclusive_fields.issubset(set(one_list)):
         # both exclusive fields are there!
-        raise ValueError(
-            "It doesn't make sense to provide both {} in the row '{}'".format(
+        raise CleaningError(
+            "It doesn't make sense to provide both {} in the row '{}'."
+            "Check the documentation for usage.".format(
                 exclusive_fields, one_list))
     else:
         return one_list

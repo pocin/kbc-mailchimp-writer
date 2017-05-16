@@ -1,5 +1,6 @@
 import pytest
 from mcwriter.cleaning import clean_and_validate_lists_data
+from mcwriter.exceptions import MissingFieldError, CleaningError
 
 def test_cleaning_and_validating_lists_data():
     """Just one complete example to try the parent function"""
@@ -62,7 +63,7 @@ def test_cleaning_and_validating_lists_data():
 
 def test_cleaning_lists_raises_if_custom_id_and_list_id():
     one_list = {'custom_id': 'alist123', 'list_id': 'hash12foo34'}
-    with pytest.raises(ValueError):
+    with pytest.raises(CleaningError):
         clean_and_validate_lists_data(one_list)
 
 def test_cleaning_lists_raises_if_mandatory_str_field_is_missing():
@@ -93,5 +94,5 @@ def test_cleaning_lists_raises_if_mandatory_str_field_is_missing():
         # optional custom fields
         "visibility": 'prv'
     }
-    with pytest.raises(KeyError):
+    with pytest.raises(MissingFieldError):
         clean_and_validate_lists_data(one_list)

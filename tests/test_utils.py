@@ -1,9 +1,12 @@
-import pytest
-import json
-from tempfile import NamedTemporaryFile
-from mailchimp3 import MailChimp
+"""
+Test utility functions
+
+"""
 from unittest.mock import Mock
+import json
 import requests
+import pytest
+from mailchimp3 import MailChimp
 from mcwriter.utils import (serialize_dotted_path_dict,
                             serialize_lists_input,
                             serialize_members_input,
@@ -13,6 +16,7 @@ from mcwriter.utils import (serialize_dotted_path_dict,
                             _verify_credentials,
                             batch_still_pending,
                             wait_for_batch_to_finish)
+from mcwriter.exceptions import ConfigError, MissingFieldError
 
 @pytest.fixture
 def finished_batch_response():
@@ -241,7 +245,7 @@ def test_setting_up_client_works(monkeypatch):
 
 def test_setting_up_client_fails_on_nonpresent_apikey(monkeypatch):
     params = {}
-    with pytest.raises(KeyError):
+    with pytest.raises(MissingFieldError):
         client = _setup_client(params, enabled=False)
 
 
@@ -254,7 +258,7 @@ def test_veryifying_credentials_fails_on_wrong_apikey(client, monkeypatch):
         raise err
 
     monkeypatch.setattr(client.api_root, 'get', raise_http_error)
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ConfigError) as excinfo:
         _verify_credentials(client)
     excinfo.match('Invalid credentials')
 
@@ -264,7 +268,7 @@ def test_veryifying_credentials_wrong_apikey_ConnectionError(client, monkeypatch
         raise requests.ConnectionError("WRONG!")
 
     monkeypatch.setattr(client.api_root, 'get', raise_ConnectionError)
-    with pytest.raises(ValueError) as excinfo:
+    with pytest.raises(ConfigError) as excinfo:
         _verify_credentials(client)
     excinfo.match('Invalid credentials')
 
