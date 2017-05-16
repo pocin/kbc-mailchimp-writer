@@ -48,6 +48,8 @@ def set_up(path_config='/data/'):
     tables = cfg.get_input_tables()
     if params.get('debug'):
         logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     client = _setup_client(params)
     return client, params, tables
