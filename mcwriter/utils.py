@@ -11,6 +11,7 @@ from mailchimp3 import MailChimp
 from requests import HTTPError, ConnectionError
 from .cleaning import (clean_and_validate_lists_data,
                        clean_and_validate_members_data)
+from .exceptions import CleaningError, ConfigError, MissingFieldError
 BATCH_POLLING_DELAY = 5 #seconds
 
 def serialize_dotted_path_dict(cleaned_flat_data, delimiter='__'):
@@ -156,7 +157,7 @@ def _setup_client(params, enabled=True):
     try:
         client_config['mc_secret'] = params['#apikey']
     except KeyError:
-        raise KeyError(
+        raise MissingFieldError(
             "Please provide your mailchimp apikey in #encrypted format")
 
     client = MailChimp(**client_config)
@@ -169,11 +170,11 @@ def _verify_credentials(client):
         client.api_root.get()
     except HTTPError as err:
         if err.response.status_code == 401:
-            raise ValueError("Invalid credentials. Check them and try again.")
+            raise ConfigError("Invalid credentials. Check them and try again.")
         else:
             raise
     except ConnectionError:
-        raise ValueError("Invalid credentials. Check them and try again.")
+        raise ConfigError("Invalid credentials. Check them and try again.")
     else:
         logging.info("Credentials OK")
         return client

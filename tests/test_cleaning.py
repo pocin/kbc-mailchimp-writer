@@ -2,6 +2,7 @@
 Testing helper functions for cleaning different field types
 """
 import pytest
+from mcwriter.exceptions import CleaningError, ConfigError, MissingFieldError
 from mcwriter.cleaning import (_clean_mandatory_str_fields,
                                _clean_optional_str_fields,
                                _clean_mandatory_bool_fields,
@@ -54,7 +55,7 @@ def test_cleaning_mandatory_str_fields_missing_fails():
         "campaign_defaults__language": "id",
     }
 
-    with pytest.raises(KeyError):
+    with pytest.raises(MissingFieldError):
         cleaned_data = _clean_mandatory_str_fields(data, lists_mandatory_str_fields)
 
 def test_cleaning_mandatory_str_fields_missing_fails_dtype():
@@ -73,7 +74,7 @@ def test_cleaning_mandatory_str_fields_missing_fails_dtype():
         "campaign_defaults__language": "id",
     }
 
-    with pytest.raises(TypeError):
+    with pytest.raises(CleaningError):
         cleaned_data = _clean_mandatory_str_fields(data, lists_mandatory_str_fields)
 
 def test_cleaning_optional_str_fields_missing_doesnt_raise():
@@ -98,7 +99,7 @@ def test_cleaning_optional_str_fields_missing_raises_wrong_dtype():
         "contact__address2": 12345,
     }
 
-    with pytest.raises(TypeError):
+    with pytest.raises(CleaningError):
         _clean_optional_str_fields(data, lists_optional_str_fields)
 
 def test_cleaning_mandatory_bool_field_is_there():
@@ -131,7 +132,7 @@ def test_cleaning_mandatory_bool_field_not_there_raises():
         "name": "Robin",
     }
 
-    with pytest.raises(KeyError):
+    with pytest.raises(MissingFieldError):
         _clean_mandatory_bool_fields(data, lists_mandatory_bool_fields)
 
 
@@ -141,7 +142,7 @@ def test_cleaning_mandatory_bool_field_not_bool_raises():
         "email_type_option": "One does simply not convert this to bool"
     }
 
-    with pytest.raises(TypeError):
+    with pytest.raises(CleaningError):
         _clean_mandatory_bool_fields(data, lists_mandatory_bool_fields)
 
 
@@ -151,7 +152,7 @@ def test_cleaning_optional_bool_fields_not_bool_raises():
         "use_archive_bar": "One does simply not convert this to bool"
     }
 
-    with pytest.raises(TypeError):
+    with pytest.raises(CleaningError):
         _clean_optional_bool_fields(data, lists_optional_bool_fields)
 
 
@@ -185,7 +186,7 @@ def test_cleaning_optional_bool_fields2_raises_on_empty_string():
         "name": "Robin",
         "use_archive_bar": ""
     }
-    with pytest.raises(TypeError):
+    with pytest.raises(CleaningError):
         _clean_optional_bool_fields(data, lists_optional_bool_fields)
 
 
@@ -230,7 +231,7 @@ def test_clean_optional_custom_fields_raises_unconvertable():
         "name": "Robin",
         "visibility": 'Must be pub or prv!'
     }
-    with pytest.raises(TypeError):
+    with pytest.raises(CleaningError):
         _clean_optional_custom_fields(data, lists_optional_custom_fields)
 
 def test_clean_exclusive_fields_works():
@@ -246,5 +247,5 @@ def test_clean_exclusive_fields_raises_if():
     data = {'foo': 1,
             'bar': 1}
     exclusive_fields = set(['foo', 'bar'])
-    with pytest.raises(ValueError):
+    with pytest.raises(CleaningError):
         _clean_exclusive_fields(data, exclusive_fields)
