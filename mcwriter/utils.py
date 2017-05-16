@@ -196,11 +196,9 @@ def wait_for_batch_to_finish(client, batch_id, api_delay=BATCH_POLLING_DELAY):
         logging.info("Batch %s finished.\n"
                      "total_operations: %s\n"
                      "erorred_opeartions: %s\n"
-                     "finished_opeartions: %s\n"
-                     "all data: %s",
+                     "finished_opeartions: %s\n",
                      batch_status['id'],
                      batch_status['total_operations'],
                      batch_status['errored_operations'],
-                     batch_status['finished_operations'],
-                     batch_status)
+                     batch_status['finished_operations'])
         return batch_status
