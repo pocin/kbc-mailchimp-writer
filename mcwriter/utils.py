@@ -13,7 +13,7 @@ from .cleaning import (clean_and_validate_lists_data,
                        clean_and_validate_members_data)
 BATCH_POLLING_DELAY = 5 #seconds
 
-def serialize_dotted_path_dict(cleaned_flat_data, delimiter='#'):
+def serialize_dotted_path_dict(cleaned_flat_data, delimiter='__'):
     """Convert fields from csv file into required nested format
 
     Handles only nesting one level deep

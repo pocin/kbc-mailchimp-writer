@@ -61,8 +61,8 @@ def pending_batch_response():
 
 def test_serializing_new_lists():
     flat = {'name': 'Robin',
-            'contact#address': 'Foobar',
-            'contact#country': 'Czechia',
+            'contact__address': 'Foobar',
+            'contact__country': 'Czechia',
             'confirm': True}
     expected = {
         'name': 'Robin',

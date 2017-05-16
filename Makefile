@@ -1,4 +1,4 @@
-VERSION=0.1.2
+VERSION=0.1.3
 IMAGE=pocin/kbc-mailchimp-writer
 TESTCOMMAND="docker run --rm -it --entrypoint '/bin/bash' -v `pwd`:/src/ -e KBC_DATADIR='/src/tests/data/' ${IMAGE}:latest /src/run_tests.sh"
 test:

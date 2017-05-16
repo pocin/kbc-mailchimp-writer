@@ -18,17 +18,17 @@ from mcwriter.cleaning import (_clean_mandatory_str_fields,
 def test_cleaning_mandatory_str_fields_success():
     data = {
         "name": "Robin",
-        "contact#company": "Nemeth",
-        "contact#address1": "Bar Bar 42",
-        "contact#city": "Foocity",
-        "contact#state": "LalaLand",
-        "contact#zip": "666",
-        "contact#country": "Ohyea",
+        "contact__company": "Nemeth",
+        "contact__address1": "Bar Bar 42",
+        "contact__city": "Foocity",
+        "contact__state": "LalaLand",
+        "contact__zip": "666",
+        "contact__country": "Ohyea",
         "permission_reminder": "You want this!",
-        "campaign_defaults#from_name": "Me",
-        "campaign_defaults#from_email": "Me@you.together",
-        "campaign_defaults#subject": "Hi",
-        "campaign_defaults#language": "id",
+        "campaign_defaults__from_name": "Me",
+        "campaign_defaults__from_email": "Me@you.together",
+        "campaign_defaults__subject": "Hi",
+        "campaign_defaults__language": "id",
     }
 
     expected_data = {}
@@ -41,17 +41,17 @@ def test_cleaning_mandatory_str_fields_success():
 def test_cleaning_mandatory_str_fields_missing_fails():
     data = {
         # "name": "Robin",
-        "contact#company": "Nemeth",
-        "contact#address1": "Bar Bar 42",
-        "contact#city": "Foocity",
-        "contact#state": "LalaLand",
-        "contact#zip": "666",
-        "contact#country": "Ohyea",
+        "contact__company": "Nemeth",
+        "contact__address1": "Bar Bar 42",
+        "contact__city": "Foocity",
+        "contact__state": "LalaLand",
+        "contact__zip": "666",
+        "contact__country": "Ohyea",
         "permission_reminder": "You want this!",
-        "campaign_defaults#from_name": "Me",
-        "campaign_defaults#from_email": "Me@you.together",
-        "campaign_defaults#subject": "Hi",
-        "campaign_defaults#language": "id",
+        "campaign_defaults__from_name": "Me",
+        "campaign_defaults__from_email": "Me@you.together",
+        "campaign_defaults__subject": "Hi",
+        "campaign_defaults__language": "id",
     }
 
     with pytest.raises(KeyError):
@@ -60,17 +60,17 @@ def test_cleaning_mandatory_str_fields_missing_fails():
 def test_cleaning_mandatory_str_fields_missing_fails_dtype():
     data = {
         "name": 12345,
-        "contact#company": "Nemeth",
-        "contact#address1": "Bar Bar 42",
-        "contact#city": "Foocity",
-        "contact#state": "LalaLand",
-        "contact#zip": "666",
-        "contact#country": "Ohyea",
+        "contact__company": "Nemeth",
+        "contact__address1": "Bar Bar 42",
+        "contact__city": "Foocity",
+        "contact__state": "LalaLand",
+        "contact__zip": "666",
+        "contact__country": "Ohyea",
         "permission_reminder": "You want this!",
-        "campaign_defaults#from_name": "Me",
-        "campaign_defaults#from_email": "Me@you.together",
-        "campaign_defaults#subject": "Hi",
-        "campaign_defaults#language": "id",
+        "campaign_defaults__from_name": "Me",
+        "campaign_defaults__from_email": "Me@you.together",
+        "campaign_defaults__subject": "Hi",
+        "campaign_defaults__language": "id",
     }
 
     with pytest.raises(TypeError):
@@ -79,23 +79,23 @@ def test_cleaning_mandatory_str_fields_missing_fails_dtype():
 def test_cleaning_optional_str_fields_missing_doesnt_raise():
     data = {
         "name": "Robin",
-        "contact#company": "Nemeth",
-        "contact#address2": "Foobar",
-        "contact#phone": None,
+        "contact__company": "Nemeth",
+        "contact__address2": "Foobar",
+        "contact__phone": None,
         "notify_on_subscribe": '',
     }
     expected = {
         "name": "Robin",
-        "contact#company": "Nemeth",
-        "contact#address2": "Foobar",
-        "contact#phone": '',
+        "contact__company": "Nemeth",
+        "contact__address2": "Foobar",
+        "contact__phone": '',
         "notify_on_subscribe": '',
     }
     assert expected ==_clean_optional_str_fields(data, lists_optional_str_fields)
 
 def test_cleaning_optional_str_fields_missing_raises_wrong_dtype():
     data = {
-        "contact#address2": 12345,
+        "contact__address2": 12345,
     }
 
     with pytest.raises(TypeError):
