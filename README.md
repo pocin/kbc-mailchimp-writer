@@ -53,20 +53,20 @@ these columns can be used to create a mailing list:
              # custom identifier that links the list with the addresses in the 
              # table for adding members.
  "name", #*string
- "contact#company", #*string
- "contact#address1", #*string
- "contact#address2", #string
- "contact#city", #*string
- "contact#state", #*string
- "contact#zip", #*string
- "contact#country", #*string
- "contact#phone", #string
+ "contact__company", #*string
+ "contact__address1", #*string
+ "contact__address2", #string
+ "contact__city", #*string
+ "contact__state", #*string
+ "contact__zip", #*string
+ "contact__country", #*string
+ "contact__phone", #string
  "permission_reminder", #*string
  "use_archive_bar", #true/false
- "campaign_defaults#from_name", #*string
- "campaign_defaults#from_email", #*string
- "campaign_defaults#subject", #*string
- "campaign_defaults#language", #*string
+ "campaign_defaults__from_name", #*string
+ "campaign_defaults__from_email", #*string
+ "campaign_defaults__subject", #*string
+ "campaign_defaults__language", #*string
  "notify_on_subscribe", #string
  "notify_on_unsubscribe", #string
  "email_type_option", #*true/false
@@ -85,7 +85,7 @@ Same columns as in `new_lists.csv`, however you should name the table `updated_l
 [The Mailchimp API](http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/#edit-put_lists_list_id_members_subscriber_hash) describes
 what fields and their values can be used to add-or-update members to lists. Here
 are the most important ones. Again, starred `*` fields are required, nested
-values are separated with `#`. The input table has to be named `add_members.csv` (define in the input mapping).
+values are separated with `__` (that is double underscore aka the "dunder"). The input table has to be named `add_members.csv` (define in the input mapping).
 
 Members which are already in given list will be updated (only supplied values.
 For exapmle the record's `vip` status will be left intact if it is already
@@ -101,8 +101,8 @@ present and the `vip` column is not defined in the input table.
                      # Defineds which status will be assigned to existing email addressess
     "email_address", #*string
     "status", #*string one of ["subscribed", "unsubscribed", "cleaned", "pending", "transactional"]
-    "interests#{interest_id}", #boolean
-    "merge_fields#{merge_tag}", #str (see merge tags mailchimp cheatsheet)
+    "interests__{interest_id}", #boolean
+    "merge_fields__{merge_tag}", #str (see merge tags mailchimp cheatsheet)
     "language", #string
     "vip", #boolean
 ```
