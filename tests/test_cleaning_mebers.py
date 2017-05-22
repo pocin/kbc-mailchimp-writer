@@ -141,26 +141,17 @@ def test_cleaning_members_interests_raises_on_invalid_interest():
 def test_cleaning_members_merge_fields_cleans_ok():
     data = {
         'email_address': 'robin@keboola.com',
-        'merge_fields__*|FNAME|*': 'Robin',
-        'merge_fields__*|LNAME|*': 'Nemeth',
+        'merge_fields__FNAME': 'Robin',
+        'merge_fields__LNAME': 'Nemeth',
     }
 
     expected = {
         'email_address': 'robin@keboola.com',
-        'merge_fields__*|FNAME|*': 'Robin',
-        'merge_fields__*|LNAME|*': 'Nemeth',
+        'merge_fields__FNAME': 'Robin',
+        'merge_fields__LNAME': 'Nemeth',
     }
     assert _clean_members_merge_fields(data) == expected
 
-
-def test_cleaning_members_merge_fields_raises_on_invalid_syntax():
-    data = {
-        'email_address': 'robin@keboola.com',
-        'merge_fields__*|FNAME*|': 'Robin',
-    }
-
-    with pytest.raises(CleaningError):
-        _clean_members_merge_fields(data)
 
 def test_providing_custom_list_id_and_list_id_raises():
     data = {

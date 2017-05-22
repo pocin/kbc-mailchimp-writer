@@ -220,7 +220,7 @@ def _clean_members_interests(one_list):
 
 
 def _clean_members_merge_fields(one_list):
-    merge_field_pat = r'^merge_fields__\*\|\w+\|\*$'
+    merge_field_pat = r'^merge_fields__\w+$'
     pattern = re.compile(merge_field_pat)
     ok_fields = []
 
