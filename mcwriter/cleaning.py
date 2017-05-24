@@ -63,6 +63,9 @@ def clean_and_validate_members_data(one_list):
     one_list['subscriber_hash'] = md5hash
     return one_list
 
+def clean_and_validate_tags_data(one_tag):
+    return one_tag
+
 
 def _clean_mandatory_str_fields(one_list, fields):
     for field in fields:
