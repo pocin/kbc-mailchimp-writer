@@ -52,3 +52,10 @@ foo@bar.com,false,true,false,pending,false,,12345,subscribed,custom_list1''')
 @pytest.fixture
 def created_lists():
     return {'custom_list1': 'mailchimp_list_id'}
+
+@pytest.fixture
+def add_tags_csv(tmpdir):
+    tags = tmpdir.join("add_merge_tags.csv")
+    tags.write('''"list_id","name","type","tag","required","options__size"
+"abc0123","My first tag","text","MYFIRST","false","255"''')
+    return tags

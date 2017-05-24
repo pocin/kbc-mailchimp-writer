@@ -10,7 +10,8 @@ import logging
 from mailchimp3 import MailChimp
 from requests import HTTPError, ConnectionError
 from .cleaning import (clean_and_validate_lists_data,
-                       clean_and_validate_members_data)
+                       clean_and_validate_members_data,
+                       clean_and_validate_tags_data)
 from .exceptions import CleaningError, ConfigError, MissingFieldError
 BATCH_POLLING_DELAY = 5 #seconds
 
@@ -81,6 +82,24 @@ def serialize_members_input(path, created_lists=None):
             serialized_line = serialize_dotted_path_dict(cleaned_flat_data)
             serialized.append(serialized_line)
     return serialized
+
+def serialize_tags_input(path_csv):
+    """Parse the csv file for adding tags to existing list
+    Args:
+        path_csv (str): path/to/members.csv
+
+    Returns:
+        a list of dicts containing cleaned and serialized data
+    """
+    serialized = []
+    with open(path_csv, 'r') as tags:
+        reader = csv.DictReader(tags)
+        for line in reader:
+            cleaned_flat = clean_and_validate_tags_data(line)
+            serialized_line = serialize_dotted_path_dict(cleaned_flat)
+            serialized.append(serialized_line)
+    return serialized
+
 
 def prepare_batch_data_lists(serialized_data):
     """Prepare data for batch operation

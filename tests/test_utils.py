@@ -10,6 +10,7 @@ from mailchimp3 import MailChimp
 from mcwriter.utils import (serialize_dotted_path_dict,
                             serialize_lists_input,
                             serialize_members_input,
+                            serialize_tags_input,
                             prepare_batch_data_lists,
                             prepare_batch_data_add_members,
                             _setup_client,
@@ -63,7 +64,7 @@ def pending_batch_response():
         'submitted_at': '2017-04-21T11:08:15+00:00',
         'total_operations': 3}
 
-def test_serializing_new_lists():
+def test_serializing_nested_path():
     flat = {'name': 'Robin',
             'contact__address': 'Foobar',
             'contact__country': 'Czechia',
@@ -291,3 +292,15 @@ def test_waiting_for_batch_op_to_finish(pending_batch_response,
     results = wait_for_batch_to_finish(client, batch_id, api_delay=0.1)
     assert results == finished_batch_response
 
+
+def test_parsing_tags_table(add_tags_csv):
+    serialized = serialize_tags_input(add_tags_csv.strpath)
+    expected = [{
+        'list_id': 'abc0123',
+        'name': 'My first tag',
+        'type': 'text',
+        'tag': "MYFIRST",
+        'required': False,
+        'options': {'size': 255}
+    }]
+    assert serialized == expected
