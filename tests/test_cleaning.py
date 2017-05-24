@@ -9,6 +9,7 @@ from mcwriter.cleaning import (_clean_mandatory_str_fields,
                                _clean_optional_bool_fields,
                                _clean_optional_custom_fields,
                                _clean_exclusive_fields,
+                               _clean_optional_integer_fields,
                                lists_mandatory_str_fields,
                                lists_optional_str_fields,
                                lists_mandatory_bool_fields,
@@ -249,3 +250,10 @@ def test_clean_exclusive_fields_raises_if():
     exclusive_fields = set(['foo', 'bar'])
     with pytest.raises(CleaningError):
         _clean_exclusive_fields(data, exclusive_fields)
+
+def test_cleaning_optional_integer_fields_cleans():
+    data = {'display_order': '2'}
+    expected = {'display_order': 2}
+
+    cleaned = _clean_optional_integer_fields(data, ('display_order',))
+    assert cleaned == expected
