@@ -83,10 +83,13 @@ def serialize_members_input(path, created_lists=None):
             serialized.append(serialized_line)
     return serialized
 
-def serialize_tags_input(path_csv):
+def serialize_tags_input(path_csv, created_lists=None):
     """Parse the csv file for adding tags to existing list
     Args:
-        path_csv (str): path/to/members.csv
+        path_csv (str): 'path/to/members.csv'
+        created_lists (dict): a mapping of custom_list_ids to real
+            (newly created) mailchimp lists. If you do not supply this,
+            it is assumed, that you provided list_id in the csv.
 
     Returns:
         a list of dicts containing cleaned and serialized data
@@ -95,6 +98,9 @@ def serialize_tags_input(path_csv):
     with open(path_csv, 'r') as tags:
         reader = csv.DictReader(tags)
         for line in reader:
+            if created_lists:
+                mailchimp_list_id = created_lists[line.pop('custom_list_id')]
+                line['list_id'] = mailchimp_list_id
             cleaned_flat = clean_and_validate_tags_data(line)
             serialized_line = serialize_dotted_path_dict(cleaned_flat)
             serialized.append(serialized_line)

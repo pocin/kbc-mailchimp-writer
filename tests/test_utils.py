@@ -304,3 +304,17 @@ def test_parsing_tags_table(add_tags_csv):
         'options': {'size': 255}
     }]
     assert serialized == expected
+
+
+def test_parsing_tags_table_with_custom_id(add_tags_csv_custom_id):
+    created_lists = {'wizards': 'ab0123'}
+    serialized = serialize_tags_input(add_tags_csv_custom_id.strpath, created_lists)
+    expected = [{
+        'list_id': 'ab0123',
+        'name': 'My first tag',
+        'type': 'text',
+        'tag': "MYFIRST",
+        'required': False,
+        'options': {'size': 255}
+    }]
+    assert serialized == expected
