@@ -35,7 +35,13 @@ members_exclusive_fields = set(('list_id', 'custom_list_id'))
 
 # fields for adding tags
 tags_optional_bool_fields = ('required', 'public')
-tags_mandatory_str_fields = ('name', 'type')
+tags_mandatory_str_fields = ('name', )
+tags_optional_str_fields = ('tag', 'default_value', 'help_text')
+tags_optional_integer_fields = ('display_order', )
+tags_mandatory_custom_fields = {'type': ["text", "number", "address", "phone",
+                                         "date", "url", "imageurl", "radio",
+                                         "dropdown", "birthday", "zip"]}
+
 
 def clean_and_validate_lists_data(one_list):
     logging.debug("Cleaning one mailing list data")
@@ -70,8 +76,13 @@ def clean_and_validate_tags_data(one_tag):
     logging.debug("Cleaning tags data")
     for cleaning_procedure, fields in (
             (_clean_optional_bool_fields, tags_optional_bool_fields),
-            (_clean_mandatory_str_fields, tags_mandatory_str_fields),):
+            (_clean_mandatory_str_fields, tags_mandatory_str_fields),
+            (_clean_optional_str_fields, tags_optional_str_fields),
+            (_clean_optional_integer_fields, tags_optional_integer_fields),
+            (_clean_mandatory_custom_fields, tags_mandatory_custom_fields),
+    ):
         one_tag = cleaning_procedure(one_tag, fields)
+    one_tag = _clean_tags_options(one_tag)
     return one_tag
 
 
@@ -256,4 +267,37 @@ def _clean_exclusive_fields(one_list, exclusive_fields):
     else:
         return one_list
 
+def _clean_optional_integer_fields(one_record, fields):
+    for field in fields:
+        try:
+            one_record[field] = int(one_record[field])
+        except KeyError:
+            # the field is optional, we do not care!
+            pass
+        except ValueError:
+            raise CleaningError("Field {} in record {} must be integer,"
+                                " not '{}'".format(field, one_record,
+                                                   type(one_record[field])))
+    return one_record
 
+def _clean_tags_options(one_record):
+    option_field_pat = r'^options__$'
+    pattern = re.compile(option_field_pat)
+    ok_fields = []
+
+    for field in (f for f in one_record if f.startswith('options__')):
+        if field in ['options__phone_format', 'options__date_format']:
+            one_record[field]= str(one_record[field])
+        elif field in ['options__default_country', 'options__size']:
+            try:
+                one_record[field]= int(one_record[field])
+            except ValueError:
+                raise CleaningError("The field {} in record {}"
+                                    "must be integer, not {}".format(
+                                        field, one_record[field],
+                                        type(one_record[field])))
+        elif field == 'options__choices':
+            one_record[field] = list(map(lambda x: str(x).strip(),
+                                         one_record[field].split(',')))
+
+    return one_record
