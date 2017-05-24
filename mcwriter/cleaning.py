@@ -41,6 +41,7 @@ tags_optional_integer_fields = ('display_order', )
 tags_mandatory_custom_fields = {'type': ["text", "number", "address", "phone",
                                          "date", "url", "imageurl", "radio",
                                          "dropdown", "birthday", "zip"]}
+tags_exclusive_fields = set(('list_id', 'custom_id'))
 
 
 def clean_and_validate_lists_data(one_list):
@@ -75,6 +76,7 @@ def clean_and_validate_members_data(one_list):
 def clean_and_validate_tags_data(one_tag):
     logging.debug("Cleaning tags data")
     for cleaning_procedure, fields in (
+            (_clean_exclusive_fields, tags_exclusive_fields),
             (_clean_optional_bool_fields, tags_optional_bool_fields),
             (_clean_mandatory_str_fields, tags_mandatory_str_fields),
             (_clean_optional_str_fields, tags_optional_str_fields),

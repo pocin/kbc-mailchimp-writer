@@ -59,3 +59,17 @@ def add_tags_csv(tmpdir):
     tags.write('''"list_id","name","type","tag","required","options__size"
 "abc0123","My first tag","text","MYFIRST","false","255"''')
     return tags
+
+@pytest.fixture
+def add_tags_csv_custom_id(tmpdir):
+    tags = tmpdir.join("add_merge_tags.csv")
+    tags.write('''"custom_list_id","name","type","tag","required","options__size"
+"wizards","My first tag","text","MYFIRST","false","255"''')
+    return tags
+
+@pytest.fixture
+def add_tags_csv_both_ids(tmpdir):
+    tags = tmpdir.join("add_merge_tags.csv")
+    tags.write('''"custom_list_id","list_id","name","type","tag","required","options__size"
+"wizards","ab01234","My first tag","text","MYFIRST","false","255"''')
+    return tags
