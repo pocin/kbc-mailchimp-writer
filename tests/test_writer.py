@@ -1,7 +1,8 @@
 import pytest
 import requests
 from mcwriter.writer import (create_lists, update_lists,
-                             add_members_to_lists, _create_lists_serial)
+                             create_tags, add_members_to_lists,
+                             _create_lists_serial)
 from tempfile import NamedTemporaryFile
 from mcwriter.exceptions import CleaningError, MissingFieldError, UserError
 import mcwriter
@@ -117,3 +118,13 @@ def test_running_app_catches_generic_UserError_as_user_error(monkeypatch):
     with pytest.raises(SystemExit) as excinfo:
         mcwriter.writer.run()
     assert excinfo.value.code == 1
+
+def test_creating_tags_has_ok_syntax(client, add_tags_csv):
+    create_tags(client, csv_tags=add_tags_csv.strpath)
+    assert 1
+
+
+def test_creating_tags_with_created_lists_has_ok_syntax(client, add_tags_csv_custom_id):
+    created_lists = {'wizards': 'abc0123'}
+    create_tags(client, csv_tags=add_tags_csv_custom_id.strpath, created_lists=created_lists)
+    assert 1

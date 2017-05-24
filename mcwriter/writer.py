@@ -16,6 +16,7 @@ from requests import HTTPError
 from .exceptions import UserError, ConfigError
 from .utils import (serialize_lists_input,
                     serialize_members_input,
+                    serialize_tags_input,
                     prepare_batch_data_add_members,
                     _setup_client,
                     wait_for_batch_to_finish)
@@ -26,6 +27,7 @@ from .utils import (serialize_lists_input,
 FILE_NEW_LISTS = 'new_lists.csv'
 FILE_UPDATE_LISTS = 'update_lists.csv'
 FILE_ADD_MEMBERS = 'add_members.csv'
+FILE_ADD_tags = 'add_tags.csv'
 BATCH_THRESHOLD = 3 # When to switch from serial jobs to batch jobs
 SEQUENTIAL_REQUEST_DELAY = 0.3 #seconds between sequential requests
 
@@ -62,6 +64,11 @@ def show_lists():
 
 
 def _create_lists_serial(client, serialized_data):
+    """Create lists. Optionally, return the mapping to real ids
+
+    Returns:
+        a mapping of {custom_list_id: real_list_id} for every created list
+    """
     logging.debug('Creating lists in serial.')
     created_lists = {}
     for data in serialized_data:
@@ -174,6 +181,14 @@ def add_members_to_lists(client, csv_members, batch=None, created_lists=None):
         batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
                                  api_delay=5)
 
+
+def create_tags(client, csv_tags, created_lists=None):
+    serialized_tags = serialize_tags_input(csv_tags, created_lists=created_lists)
+    logging.info("Adding %s tags to lists", len(serialized_tags))
+    for tag in serialized_tags:
+        # at this point we need th real list id
+        list_id = tag.pop('list_id')
+        client.lists.merge_fields.create(list_id, tag)
 
 
 def run_update_lists(client, csv_lists):
