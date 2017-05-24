@@ -35,6 +35,7 @@ members_exclusive_fields = set(('list_id', 'custom_list_id'))
 
 # fields for adding tags
 tags_optional_bool_fields = ('required', 'public')
+tags_mandatory_str_fields = ('name', 'type')
 
 def clean_and_validate_lists_data(one_list):
     logging.debug("Cleaning one mailing list data")
@@ -68,7 +69,8 @@ def clean_and_validate_members_data(one_list):
 def clean_and_validate_tags_data(one_tag):
     logging.debug("Cleaning tags data")
     for cleaning_procedure, fields in (
-            (_clean_optional_bool_fields, tags_optional_bool_fields),):
+            (_clean_optional_bool_fields, tags_optional_bool_fields),
+            (_clean_mandatory_str_fields, tags_mandatory_str_fields),):
         one_tag = cleaning_procedure(one_tag, fields)
     return one_tag
 
