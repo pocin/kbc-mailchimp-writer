@@ -79,8 +79,7 @@ def clean_and_validate_tags_data(one_tag):
             (_clean_mandatory_str_fields, tags_mandatory_str_fields),
             (_clean_optional_str_fields, tags_optional_str_fields),
             (_clean_optional_integer_fields, tags_optional_integer_fields),
-            (_clean_mandatory_custom_fields, tags_mandatory_custom_fields),
-    ):
+            (_clean_mandatory_custom_fields, tags_mandatory_custom_fields)):
         one_tag = cleaning_procedure(one_tag, fields)
     one_tag = _clean_tags_options(one_tag)
     return one_tag
@@ -298,6 +297,6 @@ def _clean_tags_options(one_record):
                                         type(one_record[field])))
         elif field == 'options__choices':
             one_record[field] = list(map(lambda x: str(x).strip(),
-                                         one_record[field].split(',')))
+                                         one_record[field].split(';')))
 
     return one_record
