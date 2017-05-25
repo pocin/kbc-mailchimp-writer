@@ -189,6 +189,7 @@ def create_tags(client, csv_tags, created_lists=None):
         # at this point we need th real list id
         list_id = tag.pop('list_id')
         client.lists.merge_fields.create(list_id, tag)
+    logging.info("Tags created.")
 
 
 def run_update_lists(client, csv_lists):
@@ -201,6 +202,7 @@ def run_update_lists(client, csv_lists):
         csv_lists: path/to/update_lists.csv
     """
     update_lists(client, csv_lists=csv_lists)
+
 
 def create_lists_add_members(client, csv_lists, csv_members):
     """Run the writer create tables and add members
@@ -268,6 +270,13 @@ def run_writer(client, params, tables, datadir):
                             path_update_lists,
                             path_new_lists,
                             path_add_members))
+
+    # TODO REFACTOR to process tables sequentially
+    #1. update_lists.csv
+    #2. new_lists.csv
+    #3. add_tags.csv
+    #4. add_members.csv
+
 
     if len(tablenames) == 0:
         raise ConfigError("No input tables specified!")
