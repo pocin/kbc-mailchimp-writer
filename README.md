@@ -80,12 +80,26 @@ mailing list.
 ## Updating of existing mailing lists
 Same columns as in `new_lists.csv`, however you should name the table `updated_lists.csv` in the input mapping.
 
+## Adding merge fields (merge tags) to lists 
+[Check the docs](http://developer.mailchimp.com/documentation/mailchimp/reference/lists/merge-fields/#%20) for
+full reference. The only required columns in your csv are `type`, `name` and
+`list_id`.
+
+You can add tags to both newly created lists and already existing lists.
+### Adding to existing lists
+Simply specify the column `list_id`
+### Adding to newly created lists
+Put a column `custom_id` (the value can be anything) in your `new_lists.csv`
+file. In your `add_tags.csv` put column `custom_list_id` which references the
+`custom_id` in `new_lists.csv`
+
 ## Adding members to lists
 
 [The Mailchimp API](http://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/#edit-put_lists_list_id_members_subscriber_hash) describes
 what fields and their values can be used to add-or-update members to lists. Here
 are the most important ones. Again, starred `*` fields are required, nested
-values are separated with `__` (that is double underscore aka the "dunder"). The input table has to be named `add_members.csv` (define in the input mapping).
+values are separated with `__` (that is double underscore aka the "dunder"). The
+input table has to be named `add_members.csv` (define in the input mapping).
 
 Members which are already in given list will be updated (only supplied values.
 For exapmle the record's `vip` status will be left intact if it is already
