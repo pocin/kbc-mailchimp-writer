@@ -251,7 +251,7 @@ def run_writer(client, params, tables, datadir):
     path_add_members = os.path.join(datadir, 'in/tables', FILE_ADD_MEMBERS)
     path_add_tags = os.path.join(datadir, 'in/tables', FILE_ADD_TAGS)
 
-    creted_lists = {}
+    created_lists = {}
     #1. update_lists.csv
     #2. new_lists.csv
     #3. add_tags.csv
