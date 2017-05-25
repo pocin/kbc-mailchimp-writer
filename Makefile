@@ -4,6 +4,9 @@ TESTCOMMAND="docker run --rm -it --entrypoint '/bin/bash' -v `pwd`:/src/ -e KBC_
 test:
 	eval $(TESTCOMMAND)
 
+run:
+	docker run --rm -v `pwd`:/src/ -e KBC_DATADIR=/src/tests/data/ ${IMAGE}:latest
+
 verbosetest:
 	eval $(TESTCOMMAND) -vv
 
