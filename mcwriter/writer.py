@@ -29,7 +29,7 @@ FILE_UPDATE_LISTS = 'update_lists.csv'
 FILE_ADD_MEMBERS = 'add_members.csv'
 FILE_ADD_tags = 'add_tags.csv'
 BATCH_THRESHOLD = 3 # When to switch from serial jobs to batch jobs
-SEQUENTIAL_REQUEST_DELAY = 0.3 #seconds between sequential requests
+SEQUENTIAL_REQUEST_DELAY = 0.8 #seconds between sequential requests
 
 LISTS_VALID_FIELDS = ["name",
                       "contact.company", "contact.address1", "contact.address2",
@@ -179,7 +179,7 @@ def add_members_to_lists(client, csv_members, batch=None, created_lists=None):
     else:
         batch_response = _add_members_in_batch(client, serialized_data)
         batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
-                                 api_delay=5)
+                                 api_delay=SEQUENTIAL_REQUEST_DELAY)
 
 
 def create_tags(client, csv_tags, created_lists=None):
@@ -202,21 +202,6 @@ def run_update_lists(client, csv_lists):
         csv_lists: path/to/update_lists.csv
     """
     update_lists(client, csv_lists=csv_lists)
-
-
-def create_lists_add_members(client, csv_lists, csv_members):
-    """Run the writer create tables and add members
-
-    Take input tables for
-        - creating lists
-        - adding-or-updating members in list(s)
-    and parse them in that order.
-
-    """
-
-    created_lists = create_lists(client, csv_lists=csv_lists)
-    add_members_to_lists(client, csv_members=csv_members,
-                         created_lists=created_lists)
 
 
 def run():
@@ -259,43 +244,29 @@ def run_writer(client, params, tables, datadir):
 
     logging.debug("Running writer")
     tablenames = [t['full_path'] for t in tables]
+
     logging.debug("Got tablenames %s", tablenames)
     path_update_lists = os.path.join(datadir, 'in/tables', FILE_UPDATE_LISTS)
     path_new_lists = os.path.join(datadir, 'in/tables', FILE_NEW_LISTS)
     path_add_members = os.path.join(datadir, 'in/tables', FILE_ADD_MEMBERS)
+    path_add_tags = os.path.join(datadir, 'in/tables', FILE_ADD_TAGS)
 
-    wrong_tables_msg = ("Not sure what to do, got these tables: {}"
-                        "Expecting combination of those: {} {} {}".format(
-                            tablenames,
-                            path_update_lists,
-                            path_new_lists,
-                            path_add_members))
-
-    # TODO REFACTOR to process tables sequentially
+    creted_lists = {}
     #1. update_lists.csv
     #2. new_lists.csv
     #3. add_tags.csv
     #4. add_members.csv
 
-
     if len(tablenames) == 0:
         raise ConfigError("No input tables specified!")
 
-    if path_update_lists in tablenames and len(tablenames) == 1:
+    if path_update_lists in tablenames:
         update_lists(client, csv_lists=path_update_lists)
-
-    elif path_add_members in tablenames and len(tablenames) == 1:
-        add_members_to_lists(client=client, csv_members=path_add_members)
-
-    elif path_new_lists in tablenames:
-        if len(tablenames) == 1:
-            create_lists(client=client, csv_lists=path_new_lists)
-        elif len(tablenames) == 2 and path_add_members in tablenames:
-            create_lists_add_members(client,
-                                     csv_lists=path_new_lists,
-                                     csv_members=path_add_members)
-        else:
-            raise ConfigError(wrong_tables_msg)
-    else:
-        raise ConfigError(wrong_tables_msg)
+    if path_new_lists in tablenames:
+        created_lists = create_lists(client, csv_lists=path_new_lists)
+    if path_add_tags in tablenames:
+        create_tags(client, csv_tags=path_add_tags, created_lists=created_lists)
+    if path_add_members in tablenames:
+        add_members_to_lists(client=client, csv_members=path_add_members,
+                             created_lists=created_lists)
     logging.info("Writer finished")
