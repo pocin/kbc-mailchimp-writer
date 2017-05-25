@@ -27,7 +27,7 @@ from .utils import (serialize_lists_input,
 FILE_NEW_LISTS = 'new_lists.csv'
 FILE_UPDATE_LISTS = 'update_lists.csv'
 FILE_ADD_MEMBERS = 'add_members.csv'
-FILE_ADD_tags = 'add_tags.csv'
+FILE_ADD_TAGS = 'add_tags.csv'
 BATCH_THRESHOLD = 3 # When to switch from serial jobs to batch jobs
 SEQUENTIAL_REQUEST_DELAY = 0.8 #seconds between sequential requests
 
