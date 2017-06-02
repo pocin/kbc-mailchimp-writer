@@ -4,17 +4,18 @@
 Keboola connection mailchimp writer
 
 # Resources
-Implement as
-an [Keboola extension](https://developers.keboola.com/extend/docker/) Check out
-complete
+Implemented as
+an [Keboola extension](https://developers.keboola.com/extend/docker/)
+
+Check out complete
 [Mailchimp API v3 docs](http://developer.mailchimp.com/documentation/mailchimp/guides/get-started-with-mailchimp-api-3/)
 if you are unsure about some fields:
 
 # Configuration
-Only your Mailchimp api encrypted key ([Obtain here](https://admin.mailchimp.com/account/api/)) is required 
+Only your Mailchimp api key ([Obtain here](https://admin.mailchimp.com/account/api/)) is required 
 ```javascript
 {
-    #apikey: "===KEBOOLA-ENCRYPTED-APIKEY-FOOBAR12345"
+    #apikey: "abcasdfasdfsdfsadfasdf-usxx"
 }
 
 ```
@@ -24,7 +25,9 @@ The writer enables:
 
 2. Updating details of existing mailing lists
 
-3. Adding and editing email addresses in mailing lists
+3. Adding merge tags to existing or newly created mailing lists
+
+4. Adding and editing email addresses in mailing lists
 
 **The tables you provide determine the writer's behavior**. See below for the
 actual table structures, [See here for actual examples](templates). 
@@ -123,7 +126,7 @@ present and the `vip` column is not defined in the input table.
 
 ### Adding members to newly created lists
 Use column `custom_list_id` in the `add_members.csv` input table, which references the column
-`custom_list_id` in the `new_lists.csv` In this case, do not use the column `list_id`
+`custom_id` in the `new_lists.csv` In this case, do not use the column `list_id`
 in neither the `add_members.csv` nor in the `new_lists.csv`
 
 ### Adding members to already existing lists
