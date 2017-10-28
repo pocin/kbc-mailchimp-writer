@@ -1,6 +1,13 @@
-FROM quay.io/keboola/docker-custom-python:1.3.0
+FROM alpine:3.6
 
 MAINTAINER Robin robin@keboola.com
+
+RUN apk add --no-cache python3 git && \
+    python3 -m ensurepip && \
+    rm -r /usr/lib/python*/ensurepip && \
+    pip3 install --upgrade pip setuptools && \
+    if [ ! -e /usr/bin/pip ]; then ln -s pip3 /usr/bin/pip ; fi && \
+    rm -r /root/.cache
 
 RUN pip install --no-cache-dir --ignore-installed \
     mailchimp3==2.0.11 \
@@ -11,6 +18,6 @@ RUN pip install --no-cache-dir --ignore-installed \
 
 COPY . /src/
 
-ENTRYPOINT python -u /src/main.py
+CMD python -u /src/main.py
 # prepare the container
 WORKDIR /home

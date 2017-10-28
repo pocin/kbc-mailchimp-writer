@@ -1,0 +1,5 @@
+**/*.ipynb
+tests/env.sh
+**/config.json
+**/.ipynb_checkpoints
+.git

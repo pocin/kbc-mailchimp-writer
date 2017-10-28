@@ -1,5 +1,9 @@
 #### joe made this: http://goel.io/joe
 
+#custom
+tests/env.sh
+**/*.ipynb
+
 #### python ####
 # Byte-compiled / optimized / DLL files
 __pycache__/
