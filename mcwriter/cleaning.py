@@ -20,7 +20,7 @@ lists_optional_custom_fields = {"visibility": ['pub', 'prv']}
 lists_exclusive_fields = set(('list_id', 'custom_id'))
 # fields for adding members
 members_mandatory_str_fields = ('email_address', 'list_id')
-members_mandatory_custom_fields = {"status": ['subscribed', 'unsubscribed',
+members_optional_custom_fields = {"status": ['subscribed', 'unsubscribed',
                                               'cleaned', 'pending',
                                               'transactional'],
                                    "status_if_new": ['subscribed', 'unsubscribed',
@@ -66,7 +66,7 @@ def clean_and_validate_members_data(one_list):
             (_clean_optional_bool_fields, members_optional_bool_fields),
             (_clean_mandatory_bool_fields, members_mandatory_bool_fields),
             (_clean_mandatory_str_fields, members_mandatory_str_fields),
-            (_clean_mandatory_custom_fields, members_mandatory_custom_fields)):
+            (_clean_optional_custom_fields, members_optional_custom_fields)):
         one_list = cleaning_procedure(one_list, fields)
     one_list = _clean_members_interests(one_list)
     md5hash = md5(bytes(one_list['email_address'], 'utf-8')).hexdigest()
@@ -194,13 +194,18 @@ def _clean_optional_custom_fields(one_list, fields):
         fields (dict): Mapping of column name and possible values in an list
     """
     for field, expected in fields.items():
-        value = one_list[field]
-        if value not in expected:
-            raise CleaningError(
-                "The field {field} must be one of "
-                "{expected}. It is {value} in {data}".format(
-                    field=field,
-                    expected=expected, value=value, data=one_list))
+        try:
+            value = one_list[field]
+        except KeyError:
+            # nothing to clean here
+            pass
+        else:
+            if value not in expected:
+                raise CleaningError(
+                    "The field {field} must be one of "
+                    "{expected}. It is {value} in {data}".format(
+                        field=field,
+                        expected=expected, value=value, data=one_list))
     return one_list
 
 

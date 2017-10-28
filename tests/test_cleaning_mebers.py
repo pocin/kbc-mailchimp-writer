@@ -5,8 +5,7 @@ from mcwriter.cleaning import (_clean_mandatory_custom_fields,
                                clean_and_validate_members_data,
                                _clean_members_interests,
                                _clean_exclusive_fields,
-                               _clean_members_merge_fields,
-                               members_mandatory_custom_fields)
+                               _clean_members_merge_fields)
 
 def test_cleaning_mandatory_custom_fields_raises_if_not_present():
     data = {
@@ -14,7 +13,7 @@ def test_cleaning_mandatory_custom_fields_raises_if_not_present():
     }
 
     with pytest.raises(MissingFieldError):
-        _clean_mandatory_custom_fields(data, members_mandatory_custom_fields)
+        _clean_mandatory_custom_fields(data, {'required_field': ['possible value 1', 'possible_value 2']})
 
 
 def test_cleaning_mandatory_custom_fields_validates_correctly():
@@ -30,7 +29,9 @@ def test_cleaning_mandatory_custom_fields_validates_correctly():
         "status_if_new": "subscribed"
     }
 
-    assert _clean_mandatory_custom_fields(data, members_mandatory_custom_fields) == expected
+    assert _clean_mandatory_custom_fields(data,
+                                          {'status': ['subscribed', 'unsubscribed'],
+                                           'status_if_new':['subscribed', 'unsubscribed']}) == expected
 
 
 def test_cleaning_mandatory_custom_fields_raises_if_invalid():
@@ -42,7 +43,7 @@ def test_cleaning_mandatory_custom_fields_raises_if_invalid():
     }
 
     with pytest.raises(CleaningError):
-        _clean_mandatory_custom_fields(data, members_mandatory_custom_fields)
+        _clean_mandatory_custom_fields(data, {'status': ['subscribed'], 'status_if_new': ['subscribed']})
 
 
 def test_cleaning_members_data_all_options_succeeds():

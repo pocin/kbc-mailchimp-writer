@@ -18,6 +18,7 @@ from .utils import (serialize_lists_input,
                     serialize_members_input,
                     serialize_tags_input,
                     prepare_batch_data_add_members,
+                    prepare_batch_data_update_members,
                     _setup_client,
                     wait_for_batch_to_finish)
 
@@ -28,6 +29,7 @@ FILE_NEW_LISTS = 'new_lists.csv'
 FILE_UPDATE_LISTS = 'update_lists.csv'
 FILE_ADD_MEMBERS = 'add_members.csv'
 FILE_ADD_TAGS = 'add_tags.csv'
+FILE_UPDATE_MEMBERS = 'update_members.csv'
 BATCH_THRESHOLD = 3 # When to switch from serial jobs to batch jobs
 SEQUENTIAL_REQUEST_DELAY = 0.8 #seconds between sequential requests
 
@@ -131,6 +133,39 @@ def _update_lists_serial(client, serialized_data):
     logging.info("")
 
 
+def _update_members_serial(client, serialized_data):
+    """Add members to list"""
+    logging.debug('Updating members serially')
+    for data in serialized_data:
+        try:
+            client.lists.members.update(data=data,
+                                        list_id=data.pop('list_id'),
+                                        subscriber_hash=data.pop('subscriber_hash'))
+        except HTTPError as exc:
+            err_resp = json.loads(exc.response.text)
+            logging.error("Error while creating request:\n"
+                          "POST data:\n%s\n"
+                          "Error message\n%s", data, err_resp)
+            raise
+
+
+def _update_members_in_batch(client, serialized_data):
+    operation_id = 'update_members_{:%Y%m%d:%H-%M-%S}'.format(
+        datetime.datetime.now())
+    logging.debug('Creating lists in batch mode: operation_id %s', operation_id)
+
+    operations = prepare_batch_data_update_members(serialized_data)
+    try:
+        batch_response = client.batches.create(data=operations)
+        logging.debug("Got batch response: %s", batch_response)
+    except HTTPError as exc:
+        err_resp = json.loads(exc.response.text)
+        logging.error("Error while creating batch request:\n%s\nAborting.", err_resp)
+        raise
+    else:
+        return batch_response  # should contain operation_id if we later need this
+
+
 def _add_members_serial(client, serialized_data):
     """Add members to list"""
     logging.debug('Adding members to lists in serial.')
@@ -142,7 +177,7 @@ def _add_members_serial(client, serialized_data):
         except HTTPError as exc:
             err_resp = json.loads(exc.response.text)
             logging.error("Error while creating request:\n"
-                          "POST data:\n%s"
+                          "POST data:\n%s\n"
                           "Error message\n%s", data, err_resp)
             raise
 
@@ -162,6 +197,27 @@ def _add_members_in_batch(client, serialized_data):
         raise
     else:
         return batch_response  # should contain operation_id if we later need this
+
+def update_members(client, csv_members, batch=None):
+    """
+    Update members of given lists.
+
+    parse data from csv (csv_members arugment)
+    """
+
+    logging.info("Updating members as described in %s", csv_members)
+    serialized_data = serialize_members_input(csv_members)
+    no_members = len(serialized_data)
+    logging.info("Detected %s members to be updated.", no_members)
+
+    if no_members <= BATCH_THRESHOLD and (batch is None or batch is False):
+        _update_members_serial(client, serialized_data)
+    else:
+        batch_response = _update_members_in_batch(client, serialized_data)
+        batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
+                                                api_delay=SEQUENTIAL_REQUEST_DELAY)
+
+
 
 
 def add_members_to_lists(client, csv_members, batch=None, created_lists=None):
@@ -249,6 +305,7 @@ def run_writer(client, params, tables, datadir):
     path_update_lists = os.path.join(datadir, 'in/tables', FILE_UPDATE_LISTS)
     path_new_lists = os.path.join(datadir, 'in/tables', FILE_NEW_LISTS)
     path_add_members = os.path.join(datadir, 'in/tables', FILE_ADD_MEMBERS)
+    path_update_members = os.path.join(datadir, 'in/tables', FILE_UPDATE_MEMBERS)
     path_add_tags = os.path.join(datadir, 'in/tables', FILE_ADD_TAGS)
 
     created_lists = {}
@@ -269,4 +326,6 @@ def run_writer(client, params, tables, datadir):
     if path_add_members in tablenames:
         add_members_to_lists(client=client, csv_members=path_add_members,
                              created_lists=created_lists)
+    if path_update_members in tablenames:
+        update_members(client, csv_members=path_update_members)
     logging.info("Writer finished")

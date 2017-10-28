@@ -27,7 +27,9 @@ The writer enables:
 
 3. Adding merge tags to existing or newly created mailing lists
 
-4. Adding and editing email addresses in mailing lists
+4. Adding-or-editing email addresses in mailing lists
+
+5. Updating details of existing email addresses within mailing list
 
 **The tables you provide determine the writer's behavior**. See below for the
 actual table structures, [See here for actual examples](templates). 
@@ -39,6 +41,7 @@ For the sake of clarity, the **input tablenames are hardcoded** and you can't ch
 | `new_lists.csv`                    | Add lists                                                                                                        |
 | `add_members.csv`                  | Add members to existing lists                                                                                    |
 | `new_lists.csv`, `add_members.csv` | Create lists defined in the `new_lists.csv`, then use the `custom_list_id` to add members to newly created lists |
+| `update_members.csv`               | Update existing members                                                                                          |
 
 
 - Fields marked with `*` (below) are mandatory
@@ -132,3 +135,6 @@ in neither the `add_members.csv` nor in the `new_lists.csv`
 ### Adding members to already existing lists
 Use column `list_id` in the `add_members.csv` input table to specify the list (found in the mailchimp website).
 
+### Updating members
+apart from `list_id` and `email_address` there are no mandatory fields. Just update those you want, the remaining ones will be left intact
+See [documentation](https://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/#edit-patch_lists_list_id_members_subscriber_hash) for reference on different columns

@@ -136,6 +136,37 @@ def prepare_batch_data_lists(serialized_data):
 
     return {'operations': operations}
 
+def prepare_batch_data_update_members(serialized_data):
+    """Prepare data for batch operation
+
+    When submitting batch operation, the data should contain the target for the
+    request (the template), a request method and the payload. This function
+    copies the data into the template for each datadict
+
+    Args:
+        template (dict): common data for all operations (method, path)
+        serialized_data (lists): a list structures (dicts) containing the
+            payload
+
+    """
+    template = {
+        'method': 'PATCH',
+        'path': '/lists/{list_id}/members/{subscriber_hash}',
+        'operation_id': None,
+        'body': None}
+    operations = []
+
+    for data in serialized_data:
+        temp = template.copy()
+        temp['path'] = temp['path'].format(
+            list_id=data.pop('list_id'),
+            subscriber_hash=data.pop('subscriber_hash'))
+        temp['operation_id'] = data['email_address']
+        temp['body'] = json.dumps(data)
+        operations.append(temp)
+    return {'operations': operations}
+
+
 def prepare_batch_data_add_members(serialized_data):
     """Prepare data for batch operation
 
