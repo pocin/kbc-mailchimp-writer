@@ -18,6 +18,6 @@ RUN pip install --no-cache-dir --ignore-installed \
 
 COPY . /src/
 
-CMD python -u /src/main.py
+CMD python3 -u /src/main.py
 # prepare the container
 WORKDIR /home
