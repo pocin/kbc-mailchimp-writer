@@ -31,7 +31,9 @@ FILE_ADD_MEMBERS = 'add_members.csv'
 FILE_ADD_TAGS = 'add_tags.csv'
 FILE_UPDATE_MEMBERS = 'update_members.csv'
 BATCH_THRESHOLD = 50 # When to switch from serial jobs to batch jobs
+BATCH_DELAY = 0.5 #seconds between submitting batches
 SEQUENTIAL_REQUEST_DELAY = 0.8 #seconds between sequential requests
+BATCH_WAIT_DELAY = 5 #seconds, there is linear growth polling implemented
 
 LISTS_VALID_FIELDS = ["name",
                       "contact.company", "contact.address1", "contact.address2",
@@ -205,7 +207,8 @@ def update_members(client, csv_members, batch=None):
     parse data from csv (csv_members arugment)
     """
 
-    batches = []
+    running_batches = []
+    completed_batches = []
     logging.info("Adding members to list as described in %s", csv_members)
     for serialized_data in serialize_members_input(csv_members):
         no_members = len(serialized_data)
@@ -215,16 +218,33 @@ def update_members(client, csv_members, batch=None):
             _update_members_serial(client, serialized_data)
         else:
             logging.info("Batch job request sent")
+            if len(running_batches) >= 480:
+                # mailchimp limit is 500 running batches
+                # It's not the most effective in the world, but I dont fell like
+                # messing around with threads and stuff
+                # so we just wait for one particular job to finish
+                # while others might finish as well
+                logging.info("There are %s running batch jobs. We need to wait"
+                             "for some of them to finish before submitting new one",
+                             len(running_batches))
+                wait_for_this_batch = running_batches.pop(0)
+                batch_status = wait_for_batch_to_finish(
+                    client,
+                    batch_id=wait_for_this_batch['id'],
+                    api_delay=BATCH_WAIT_DELAY)
+                completed_batches.append(batch_status)
             batch_response = _update_members_in_batch(client, serialized_data)
-            batches.append(batch_response)
+            running_batches.append(batch_response)
+            time.sleep(BATCH_DELAY)
+
     # processed_batches = []
     logging.info("Waiting for batches to finish.")
-    for batch_response in batches:
+    for batch_response in running_batches:
         # Wait untill all batches are finished
         batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
                                                 api_delay=SEQUENTIAL_REQUEST_DELAY)
-        # processed_batches.append(batch_status)
-    return batches
+        completed_batches.append(batch_status)
+    return completed_batches
 
 
 def add_members_to_lists(client, csv_members, batch=None, created_lists=None):
