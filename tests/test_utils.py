@@ -150,7 +150,8 @@ def test_preparing_batch_data():
     assert batch_data == expected
 
 def test_serializing_members_input(new_members_csv):
-    serialized = serialize_members_input(new_members_csv.name)
+    serialized = serialize_members_input(new_members_csv.name, chunk_size=1)
+    first_chunk = next(serialized)
     expected = [
         {'email_address': 'robin@keboola.com',
          'list_id': '12345', # comes from the csvfile
@@ -177,14 +178,18 @@ def test_serializing_members_input(new_members_csv):
          'merge_fields': {'*|FNAME|*': ''},
         }
     ]
-    assert serialized[0] == expected[0]
-    assert serialized[1] == expected[1]
+    assert first_chunk[0] == expected[0]
+    second_chunk = next(serialized)
+    assert second_chunk[0] == expected[1]
+    with pytest.raises(StopIteration):
+        next(serialized)
 
 def test_serializing_members_input_linked_to_lists(new_members_csv_linked_to_lists,
                                                    created_lists):
     serialized = serialize_members_input(
         new_members_csv_linked_to_lists.name,
         created_lists=created_lists)
+    first_chunk = next(serialized)
     expected = [
         {'email_address': 'robin@keboola.com',
          'list_id': 'mailchimp_list_id', # the id comes from the mapping returned by create_lists()
@@ -211,7 +216,7 @@ def test_serializing_members_input_linked_to_lists(new_members_csv_linked_to_lis
          'merge_fields': {'*|FNAME|*': ''},
         }
     ]
-    assert serialized == expected
+    assert first_chunk == expected
 
 
 def test_preparing_batch_members_data():

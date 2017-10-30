@@ -30,7 +30,7 @@ FILE_UPDATE_LISTS = 'update_lists.csv'
 FILE_ADD_MEMBERS = 'add_members.csv'
 FILE_ADD_TAGS = 'add_tags.csv'
 FILE_UPDATE_MEMBERS = 'update_members.csv'
-BATCH_THRESHOLD = 3 # When to switch from serial jobs to batch jobs
+BATCH_THRESHOLD = 50 # When to switch from serial jobs to batch jobs
 SEQUENTIAL_REQUEST_DELAY = 0.8 #seconds between sequential requests
 
 LISTS_VALID_FIELDS = ["name",
@@ -152,7 +152,7 @@ def _update_members_serial(client, serialized_data):
 def _update_members_in_batch(client, serialized_data):
     operation_id = 'update_members_{:%Y%m%d:%H-%M-%S}'.format(
         datetime.datetime.now())
-    logging.debug('Creating lists in batch mode: operation_id %s', operation_id)
+    logging.debug('updating members in batch mode: operation_id %s', operation_id)
 
     operations = prepare_batch_data_update_members(serialized_data)
     try:
@@ -185,7 +185,7 @@ def _add_members_serial(client, serialized_data):
 def _add_members_in_batch(client, serialized_data):
     operation_id = 'add_members_{:%Y%m%d:%H-%M-%S}'.format(
         datetime.datetime.now())
-    logging.debug('Creating lists in batch mode: operation_id %s', operation_id)
+    logging.debug('Adding members in batch mode: operation_id %s', operation_id)
 
     operations = prepare_batch_data_add_members(serialized_data)
     try:
@@ -205,19 +205,26 @@ def update_members(client, csv_members, batch=None):
     parse data from csv (csv_members arugment)
     """
 
-    logging.info("Updating members as described in %s", csv_members)
-    serialized_data = serialize_members_input(csv_members)
-    no_members = len(serialized_data)
-    logging.info("Detected %s members to be updated.", no_members)
+    batches = []
+    logging.info("Adding members to list as described in %s", csv_members)
+    for serialized_data in serialize_members_input(csv_members):
+        no_members = len(serialized_data)
+        logging.info("Detected %s members to be added in a chunk.", no_members)
 
-    if no_members <= BATCH_THRESHOLD and (batch is None or batch is False):
-        _update_members_serial(client, serialized_data)
-    else:
-        batch_response = _update_members_in_batch(client, serialized_data)
+        if no_members <= BATCH_THRESHOLD and (batch is None or batch is False):
+            _update_members_serial(client, serialized_data)
+        else:
+            logging.info("Batch job request sent")
+            batch_response = _update_members_in_batch(client, serialized_data)
+            batches.append(batch_response)
+    # processed_batches = []
+    logging.info("Waiting for batches to finish.")
+    for batch_response in batches:
+        # Wait untill all batches are finished
         batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
                                                 api_delay=SEQUENTIAL_REQUEST_DELAY)
-
-
+        # processed_batches.append(batch_status)
+    return batches
 
 
 def add_members_to_lists(client, csv_members, batch=None, created_lists=None):
@@ -225,17 +232,24 @@ def add_members_to_lists(client, csv_members, batch=None, created_lists=None):
 
     Parse data from csv (default /data/in/tables/add_members.csv)
     """
+    batches = []
     logging.info("Adding members to list as described in %s", csv_members)
-    serialized_data = serialize_members_input(csv_members, created_lists)
-    no_members = len(serialized_data)
-    logging.info("Detected %s members to be added.", no_members)
+    for serialized_data in serialize_members_input(csv_members, created_lists):
+        no_members = len(serialized_data)
+        logging.info("Detected %s members to be added in a chunk.", no_members)
 
-    if no_members <= BATCH_THRESHOLD and (batch is None or batch is False):
-        _add_members_serial(client, serialized_data)
-    else:
-        batch_response = _add_members_in_batch(client, serialized_data)
+        if no_members <= BATCH_THRESHOLD and (batch is None or batch is False):
+            _add_members_serial(client, serialized_data)
+        else:
+            batch_response = _add_members_in_batch(client, serialized_data)
+            batches.append(batch_response)
+    # processed_batches = []
+    for batch_response in batches:
+        # Wait untill all batches are finished
         batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
-                                 api_delay=SEQUENTIAL_REQUEST_DELAY)
+                                                api_delay=SEQUENTIAL_REQUEST_DELAY)
+        # processed_batches.append(batch_status)
+    return batches
 
 
 def create_tags(client, csv_tags, created_lists=None):

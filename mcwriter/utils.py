@@ -14,6 +14,7 @@ from .cleaning import (clean_and_validate_lists_data,
                        clean_and_validate_tags_data)
 from .exceptions import CleaningError, ConfigError, MissingFieldError
 BATCH_POLLING_DELAY = 5 #seconds
+CHUNK_SIZE = 500 #rows
 
 def serialize_dotted_path_dict(cleaned_flat_data, delimiter='__'):
     """Convert fields from csv file into required nested format
@@ -57,7 +58,7 @@ def serialize_lists_input(path):
     return serialized
 
 
-def serialize_members_input(path, created_lists=None):
+def serialize_members_input(path, created_lists=None, chunk_size=CHUNK_SIZE):
     """Parse the members csvfile containing subscribers and lists
 
     optionally (created_lists arg) appends the list_id to the data based on the
@@ -71,17 +72,26 @@ def serialize_members_input(path, created_lists=None):
         a list of serialized dicts in a format that can be used by MC Api
 
     """
-    serialized = []
     with open(path, 'r') as lists:
         reader = csv.DictReader(lists)
-        for line in reader:
-            if created_lists:
-                mailchimp_list_id = created_lists[line.pop('custom_list_id')]
-                line['list_id'] = mailchimp_list_id
-            cleaned_flat_data = clean_and_validate_members_data(line)
-            serialized_line = serialize_dotted_path_dict(cleaned_flat_data)
-            serialized.append(serialized_line)
-    return serialized
+        while reader:
+            serialized = []
+            for _ in range(chunk_size):
+                try:
+                    line = next(reader)
+                except StopIteration:
+                    break
+                else:
+                    if created_lists:
+                        mailchimp_list_id = created_lists[line.pop('custom_list_id')]
+                        line['list_id'] = mailchimp_list_id
+                    cleaned_flat_data = clean_and_validate_members_data(line)
+                    serialized_line = serialize_dotted_path_dict(cleaned_flat_data)
+                    serialized.append(serialized_line)
+            # make sure there are no leftovers
+            if len(serialized) == 0:
+                raise StopIteration
+            yield serialized
 
 def serialize_tags_input(path_csv, created_lists=None):
     """Parse the csv file for adding tags to existing list
@@ -248,6 +258,7 @@ def wait_for_batch_to_finish(client, batch_id, api_delay=BATCH_POLLING_DELAY):
     while batch_still_pending(batch_status):
         batch_status = client.batches.get(batch_id)
         time.sleep(api_delay)
+        api_delay *= 1.5
     else:
         logging.info("Batch %s finished.\n"
                      "total_operations: %s\n"
