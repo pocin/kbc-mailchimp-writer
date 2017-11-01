@@ -34,9 +34,9 @@ FILE_ADD_MEMBERS = 'add_members.csv'
 FILE_ADD_TAGS = 'add_tags.csv'
 FILE_DELETE_MEMBERS = 'delete_members.csv'
 FILE_UPDATE_MEMBERS = 'update_members.csv'
-PATH_OUT_BATCHES_DELETE = 'out/tables/delete_members_batches.csv'
-PATH_OUT_BATCHES_UPDATE = 'out/tables/update_members_batches.csv'
-PATH_OUT_BATCHES_ADD = 'out/tables/add_members_batches.csv'
+PATH_OUT_BATCHES_DELETE = '/data/out/tables/delete_members_batches.csv'
+PATH_OUT_BATCHES_UPDATE = '/data/out/tables/update_members_batches.csv'
+PATH_OUT_BATCHES_ADD = '/data/out/tables/add_members_batches.csv'
 BATCH_THRESHOLD = 5 # When to switch from serial jobs to batch jobs
 BATCH_DELAY = 0.5 #seconds between submitting batches
 SEQUENTIAL_REQUEST_DELAY = 0.8 #seconds between sequential requests
@@ -230,6 +230,7 @@ def delete_members(client, csv_members):
     parse data from csv (csv_members arugment)
     """
 
+    logging.info("Deleting members to list as described in %s", csv_members)
     batches = _do_members_action_and_wait_for_batch(client,
                                           csv_members,
                                           action='delete',
@@ -308,6 +309,7 @@ def add_members_to_lists(client, csv_members, batch=None, created_lists=None):
 
     Parse data from csv (default /data/in/tables/add_members.csv)
     """
+    logging.info("Adding members to list as described in %s", csv_members)
     batches = _do_members_action_and_wait_for_batch(client,
                                                     csv_members,
                                                     action='add_or_update',

@@ -295,7 +295,7 @@ def batch_still_pending(batch_response):
 
 def wait_for_batch_to_finish(client, batch_id, api_delay=BATCH_POLLING_DELAY):
     batch_status = client.batches.get(batch_id)
-    logging.debug("Waiting for batch operation %s to finish", batch_id)
+    logging.info("Waiting for batch operation %s to finish", batch_id)
     while batch_still_pending(batch_status):
         batch_status = client.batches.get(batch_id)
         time.sleep(api_delay)
