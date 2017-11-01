@@ -436,6 +436,8 @@ def run_writer(client, params, tables, datadir):
     path_add_tags = os.path.join(datadir, 'in/tables', FILE_ADD_TAGS)
     path_delete_members = os.path.join(datadir, 'in/tables', FILE_DELETE_MEMBERS)
 
+    outbucket = params.get('results_bucket', 'in.c-mailchimp-writer')
+
     created_lists = {}
     #1. update_lists.csv
     #2. new_lists.csv
@@ -455,15 +457,15 @@ def run_writer(client, params, tables, datadir):
         batches = add_members_to_lists(client=client, csv_members=path_add_members,
                              created_lists=created_lists)
         if batches:
-            write_batches_to_csv(batches, PATH_OUT_BATCHES_ADD)
+            write_batches_to_csv(batches, PATH_OUT_BATCHES_ADD, bucketname=outbucket)
     if path_update_members in tablenames:
         batches = update_members(client, csv_members=path_update_members)
         if batches:
-            write_batches_to_csv(batches, PATH_OUT_BATCHES_UPDATE)
+            write_batches_to_csv(batches, PATH_OUT_BATCHES_UPDATE, bucketname=outbucket)
 
     if path_delete_members in tablenames:
         batches = delete_members(client, csv_members=path_delete_members)
         if batches:
-            write_batches_to_csv(batches, PATH_OUT_BATCHES_DELETE)
+            write_batches_to_csv(batches, PATH_OUT_BATCHES_DELETE, bucketname=outbucket)
     logging.info("Writer finished")
 
