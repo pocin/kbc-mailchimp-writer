@@ -309,3 +309,13 @@ def wait_for_batch_to_finish(client, batch_id, api_delay=BATCH_POLLING_DELAY):
                      batch_status['errored_operations'],
                      batch_status['finished_operations'])
         return batch_status
+
+def write_batches_to_csv(batches, outpath):
+    fieldnames = [col for col in batches[0].keys() if col != '_links']
+    with open(outpath, 'w') as f:
+        writer = csv.DictWriter(f, fieldnames)
+        writer.writeheader()
+        for batch in batches:
+            del batch['_links']
+            writer.writerow(batch)
+    return outpath

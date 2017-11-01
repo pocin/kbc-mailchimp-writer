@@ -8,6 +8,7 @@ import sys
 import logging
 import datetime
 import json
+import csv
 import time
 import traceback
 import os
@@ -19,6 +20,7 @@ from .utils import (serialize_lists_input,
                     serialize_tags_input,
                     prepare_batch_data_add_members,
                     prepare_batch_data_delete_members,
+                    write_batches_to_csv,
                     prepare_batch_data_update_members,
                     _setup_client,
                     wait_for_batch_to_finish)
@@ -32,6 +34,9 @@ FILE_ADD_MEMBERS = 'add_members.csv'
 FILE_ADD_TAGS = 'add_tags.csv'
 FILE_DELETE_MEMBERS = 'delete_members.csv'
 FILE_UPDATE_MEMBERS = 'update_members.csv'
+PATH_OUT_BATCHES_DELETE = 'out/tables/delete_members_batches.csv'
+PATH_OUT_BATCHES_UPDATE = 'out/tables/update_members_batches.csv'
+PATH_OUT_BATCHES_ADD = 'out/tables/add_members_batches.csv'
 BATCH_THRESHOLD = 5 # When to switch from serial jobs to batch jobs
 BATCH_DELAY = 0.5 #seconds between submitting batches
 SEQUENTIAL_REQUEST_DELAY = 0.8 #seconds between sequential requests
@@ -227,7 +232,7 @@ def delete_members(client, csv_members):
 
     running_batches = []
     completed_batches = []
-    logging.info("Adding members to list as described in %s", csv_members)
+    logging.info("Deleting members as described in %s", csv_members)
     processed = 0
     for serialized_data in serialize_members_input(csv_members, action='delete'):
         no_members = len(serialized_data)
@@ -273,10 +278,12 @@ def update_members(client, csv_members, batch=None):
 
     running_batches = []
     completed_batches = []
+    processed = 0
     logging.info("Adding members to list as described in %s", csv_members)
     for serialized_data in serialize_members_input(csv_members, action='update'):
         no_members = len(serialized_data)
-        logging.info("Detected %s members to be added in a chunk.", no_members)
+        processed += no_members
+        logging.info("So far processed %s rows", processed)
 
         if no_members <= BATCH_THRESHOLD and (batch is None or batch is False):
             _update_members_serial(client, serialized_data)
@@ -316,24 +323,46 @@ def add_members_to_lists(client, csv_members, batch=None, created_lists=None):
 
     Parse data from csv (default /data/in/tables/add_members.csv)
     """
-    batches = []
+    running_batches = []
+    completed_batches = []
+    processed = 0
     logging.info("Adding members to list as described in %s", csv_members)
     for serialized_data in serialize_members_input(csv_members, action='add_or_update', created_lists=created_lists):
         no_members = len(serialized_data)
-        logging.info("Detected %s members to be added in a chunk.", no_members)
+        processed += no_members
+        logging.info("So far processed %s rows", processed)
 
         if no_members <= BATCH_THRESHOLD and (batch is None or batch is False):
             _add_members_serial(client, serialized_data)
         else:
+            logging.info("Batch job request sent")
+            if len(running_batches) >= 480:
+                # mailchimp limit is 500 running batches
+                # It's not the most effective in the world, but I dont fell like
+                # messing around with threads and stuff
+                # so we just wait for one particular job to finish
+                # while others might finish as well
+                logging.info("There are %s running batch jobs. We need to wait"
+                             "for some of them to finish before submitting new one",
+                             len(running_batches))
+                wait_for_this_batch = running_batches.pop(0)
+                batch_status = wait_for_batch_to_finish(
+                    client,
+                    batch_id=wait_for_this_batch['id'],
+                    api_delay=BATCH_WAIT_DELAY)
+                completed_batches.append(batch_status)
             batch_response = _add_members_in_batch(client, serialized_data)
-            batches.append(batch_response)
+            running_batches.append(batch_response)
+            time.sleep(BATCH_DELAY)
+
     # processed_batches = []
-    for batch_response in batches:
+    logging.info("Waiting for batches to finish.")
+    for batch_response in running_batches:
         # Wait untill all batches are finished
         batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
                                                 api_delay=SEQUENTIAL_REQUEST_DELAY)
-        # processed_batches.append(batch_status)
-    return batches
+        completed_batches.append(batch_status)
+    return completed_batches
 
 
 def create_tags(client, csv_tags, created_lists=None):
@@ -423,10 +452,18 @@ def run_writer(client, params, tables, datadir):
     if path_add_tags in tablenames:
         create_tags(client, csv_tags=path_add_tags, created_lists=created_lists)
     if path_add_members in tablenames:
-        add_members_to_lists(client=client, csv_members=path_add_members,
+        batches = add_members_to_lists(client=client, csv_members=path_add_members,
                              created_lists=created_lists)
+        if batches:
+            write_batches_to_csv(batches, PATH_OUT_BATCHES_ADD)
     if path_update_members in tablenames:
-        update_members(client, csv_members=path_update_members)
+        batches = update_members(client, csv_members=path_update_members)
+        if batches:
+            write_batches_to_csv(batches, PATH_OUT_BATCHES_UPDATE)
+
     if path_delete_members in tablenames:
-        delete_members(client, csv_members=path_delete_members)
+        batches = delete_members(client, csv_members=path_delete_members)
+        if batches:
+            write_batches_to_csv(batches, PATH_OUT_BATCHES_DELETE)
     logging.info("Writer finished")
+

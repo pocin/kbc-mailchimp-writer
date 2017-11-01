@@ -3,6 +3,7 @@ Test utility functions
 
 """
 from unittest.mock import Mock
+import csv
 import json
 import requests
 import pytest
@@ -17,7 +18,8 @@ from mcwriter.utils import (serialize_dotted_path_dict,
                             _setup_client,
                             _verify_credentials,
                             batch_still_pending,
-                            wait_for_batch_to_finish)
+                            wait_for_batch_to_finish,
+                            write_batches_to_csv)
 from mcwriter.exceptions import ConfigError, MissingFieldError
 
 @pytest.fixture
@@ -337,3 +339,35 @@ def test_parsing_tags_table_with_custom_id(add_tags_csv_custom_id):
         'options': {'size': 255}
     }]
     assert serialized == expected
+
+def test_writing_batches_csv(tmpdir):
+    outpath = tmpdir.join("out.csv")
+    batches = [{'_links': [{'href': 'https://us16.api.mailchimp.com/3.0/batches',
+                            'rel': 'delete'}],
+                'completed_at': '2017-11-01T10:05:15+00:00',
+                'errored_operations': 13,
+                'finished_operations': 500,
+                'id': '71efba6182',
+                'response_body_url': 'https://mai',
+                'status': 'finished',
+                'submitted_at': '2017-11-01T10:00:49+00:00',
+                'total_operations': 500},
+               {'_links': [{'href': 'https://us16.api.mailchimp.com/3.0/batches',
+                            'rel': 'delete'}],
+                'completed_at': '2017-11-01T10:05:15+00:00',
+                'errored_operations': 13,
+                'finished_operations': 500,
+                'id': '71efba6182',
+                'response_body_url': 'https://mai',
+                'status': 'finished',
+                'submitted_at': '2017-11-01T10:00:49+00:00',
+                'total_operations': 500}
+    ]
+    write_batches_to_csv(batches, outpath.strpath)
+
+    with open(outpath.strpath, 'r') as f:
+        assert len(f.readlines()) == 3
+    with open(outpath.strpath, 'r') as f:
+        reader = csv.DictReader(f)
+        assert '_links' not in reader.fieldnames
+        assert 'id' in reader.fieldnames
