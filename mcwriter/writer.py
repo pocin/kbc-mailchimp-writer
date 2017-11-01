@@ -18,6 +18,7 @@ from .utils import (serialize_lists_input,
                     serialize_members_input,
                     serialize_tags_input,
                     prepare_batch_data_add_members,
+                    prepare_batch_data_delete_members,
                     prepare_batch_data_update_members,
                     _setup_client,
                     wait_for_batch_to_finish)
@@ -29,8 +30,9 @@ FILE_NEW_LISTS = 'new_lists.csv'
 FILE_UPDATE_LISTS = 'update_lists.csv'
 FILE_ADD_MEMBERS = 'add_members.csv'
 FILE_ADD_TAGS = 'add_tags.csv'
+FILE_DELETE_MEMBERS = 'delete_members.csv'
 FILE_UPDATE_MEMBERS = 'update_members.csv'
-BATCH_THRESHOLD = 50 # When to switch from serial jobs to batch jobs
+BATCH_THRESHOLD = 5 # When to switch from serial jobs to batch jobs
 BATCH_DELAY = 0.5 #seconds between submitting batches
 SEQUENTIAL_REQUEST_DELAY = 0.8 #seconds between sequential requests
 BATCH_WAIT_DELAY = 5 #seconds, there is linear growth polling implemented
@@ -167,6 +169,21 @@ def _update_members_in_batch(client, serialized_data):
     else:
         return batch_response  # should contain operation_id if we later need this
 
+def _delete_members_in_batch(client, serialized_data):
+    operation_id = 'delete_members_{:%Y%m%d:%H-%M-%S}'.format(
+        datetime.datetime.now())
+    logging.debug('deleting members in batch mode: operation_id %s', operation_id)
+
+    operations = prepare_batch_data_delete_members(serialized_data)
+    try:
+        batch_response = client.batches.create(data=operations)
+        logging.debug("Got batch response: %s", batch_response)
+    except HTTPError as exc:
+        err_resp = json.loads(exc.response.text)
+        logging.error("Error while creating batch request:\n%s\nAborting.", err_resp)
+        raise
+    else:
+        return batch_response  # should contain operation_id if we later need this
 
 def _add_members_serial(client, serialized_data):
     """Add members to list"""
@@ -200,6 +217,51 @@ def _add_members_in_batch(client, serialized_data):
     else:
         return batch_response  # should contain operation_id if we later need this
 
+
+def delete_members(client, csv_members):
+    """
+    Delete members of given lists. Always in batch
+
+    parse data from csv (csv_members arugment)
+    """
+
+    running_batches = []
+    completed_batches = []
+    logging.info("Adding members to list as described in %s", csv_members)
+    for serialized_data in serialize_members_input(csv_members, action='delete'):
+        no_members = len(serialized_data)
+        logging.info("Detected %s members to be added in a chunk.", no_members)
+
+        if len(running_batches) >= 480:
+            # mailchimp limit is 500 running batches
+            # It's not the most effective in the world, but I dont fell like
+            # messing around with threads and stuff
+            # so we just wait for one particular job to finish
+            # while others might finish as well
+            logging.info("There are %s running batch jobs. We need to wait"
+                            "for some of them to finish before submitting new one",
+                            len(running_batches))
+            wait_for_this_batch = running_batches.pop(0)
+            batch_status = wait_for_batch_to_finish(
+                client,
+                batch_id=wait_for_this_batch['id'],
+                api_delay=BATCH_WAIT_DELAY)
+            completed_batches.append(batch_status)
+        batch_response = _delete_members_in_batch(client, serialized_data)
+        logging.info("Batch job request sent")
+        running_batches.append(batch_response)
+        time.sleep(BATCH_DELAY)
+
+    # processed_batches = []
+    logging.info("Waiting for batches to finish.")
+    for batch_response in running_batches:
+        # Wait untill all batches are finished
+        batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
+                                                api_delay=SEQUENTIAL_REQUEST_DELAY)
+        completed_batches.append(batch_status)
+    return completed_batches
+
+
 def update_members(client, csv_members, batch=None):
     """
     Update members of given lists.
@@ -210,7 +272,7 @@ def update_members(client, csv_members, batch=None):
     running_batches = []
     completed_batches = []
     logging.info("Adding members to list as described in %s", csv_members)
-    for serialized_data in serialize_members_input(csv_members):
+    for serialized_data in serialize_members_input(csv_members, action='update'):
         no_members = len(serialized_data)
         logging.info("Detected %s members to be added in a chunk.", no_members)
 
@@ -254,7 +316,7 @@ def add_members_to_lists(client, csv_members, batch=None, created_lists=None):
     """
     batches = []
     logging.info("Adding members to list as described in %s", csv_members)
-    for serialized_data in serialize_members_input(csv_members, created_lists):
+    for serialized_data in serialize_members_input(csv_members, action='add_or_update', created_lists=created_lists):
         no_members = len(serialized_data)
         logging.info("Detected %s members to be added in a chunk.", no_members)
 
@@ -299,7 +361,7 @@ def run():
         datadir = os.getenv("KBC_DATADIR")
         client, params, tables = set_up(path_config=datadir)
         run_writer(client, params, tables, datadir=datadir)
-    except UserError as err:
+    except (UserError, HTTPError) as err:
         print(err, file=sys.stderr)
         sys.exit(1)
     except Exception as err:
@@ -341,6 +403,7 @@ def run_writer(client, params, tables, datadir):
     path_add_members = os.path.join(datadir, 'in/tables', FILE_ADD_MEMBERS)
     path_update_members = os.path.join(datadir, 'in/tables', FILE_UPDATE_MEMBERS)
     path_add_tags = os.path.join(datadir, 'in/tables', FILE_ADD_TAGS)
+    path_delete_members = os.path.join(datadir, 'in/tables', FILE_DELETE_MEMBERS)
 
     created_lists = {}
     #1. update_lists.csv
@@ -362,4 +425,6 @@ def run_writer(client, params, tables, datadir):
                              created_lists=created_lists)
     if path_update_members in tablenames:
         update_members(client, csv_members=path_update_members)
+    if path_delete_members in tablenames:
+        delete_members(client, csv_members=path_delete_members)
     logging.info("Writer finished")

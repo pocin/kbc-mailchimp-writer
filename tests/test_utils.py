@@ -13,6 +13,7 @@ from mcwriter.utils import (serialize_dotted_path_dict,
                             serialize_tags_input,
                             prepare_batch_data_lists,
                             prepare_batch_data_add_members,
+                            prepare_batch_data_delete_members,
                             _setup_client,
                             _verify_credentials,
                             batch_still_pending,
@@ -149,8 +150,20 @@ def test_preparing_batch_data():
     ]}
     assert batch_data == expected
 
+def test_preparing_batch_data_for_delete():
+    serialized_data = [{'list_id': 'foo', 'subscriber_hash': 'abc', 'email_address': 'me@ex.co'}]
+    expected = {
+        'operations': [
+            {'method': 'DELETE',
+             'path': '/lists/foo/members/abc',
+             'operation_id': 'me@ex.co'}
+        ]
+    }
+    prepared = prepare_batch_data_delete_members(serialized_data)
+    assert prepared == expected
+
 def test_serializing_members_input(new_members_csv):
-    serialized = serialize_members_input(new_members_csv.name, chunk_size=1)
+    serialized = serialize_members_input(new_members_csv.name, action='add_or_update', chunk_size=1)
     first_chunk = next(serialized)
     expected = [
         {'email_address': 'robin@keboola.com',
@@ -188,6 +201,7 @@ def test_serializing_members_input_linked_to_lists(new_members_csv_linked_to_lis
                                                    created_lists):
     serialized = serialize_members_input(
         new_members_csv_linked_to_lists.name,
+        action='add_or_update',
         created_lists=created_lists)
     first_chunk = next(serialized)
     expected = [

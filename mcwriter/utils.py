@@ -11,6 +11,7 @@ from mailchimp3 import MailChimp
 from requests import HTTPError, ConnectionError
 from .cleaning import (clean_and_validate_lists_data,
                        clean_and_validate_members_data,
+                       clean_and_validate_members_delete_data,
                        clean_and_validate_tags_data)
 from .exceptions import CleaningError, ConfigError, MissingFieldError
 BATCH_POLLING_DELAY = 5 #seconds
@@ -58,7 +59,7 @@ def serialize_lists_input(path):
     return serialized
 
 
-def serialize_members_input(path, created_lists=None, chunk_size=CHUNK_SIZE):
+def serialize_members_input(path, action, created_lists=None, chunk_size=CHUNK_SIZE):
     """Parse the members csvfile containing subscribers and lists
 
     optionally (created_lists arg) appends the list_id to the data based on the
@@ -72,6 +73,11 @@ def serialize_members_input(path, created_lists=None, chunk_size=CHUNK_SIZE):
         a list of serialized dicts in a format that can be used by MC Api
 
     """
+    actions = ('add_or_update', 'update', 'delete')
+    if action not in actions:
+        raise ConfigError("When serializing members data, you must choose one"
+                          "of the following actions {}, not {}".format(
+                              actions, action))
     with open(path, 'r') as lists:
         reader = csv.DictReader(lists)
         while reader:
@@ -85,7 +91,12 @@ def serialize_members_input(path, created_lists=None, chunk_size=CHUNK_SIZE):
                     if created_lists:
                         mailchimp_list_id = created_lists[line.pop('custom_list_id')]
                         line['list_id'] = mailchimp_list_id
-                    cleaned_flat_data = clean_and_validate_members_data(line)
+                    if action in {'add_or_update', 'update'}:
+                        cleaned_flat_data = clean_and_validate_members_data(line)
+                    else:
+                        # it's delete
+                        cleaned_flat_data = clean_and_validate_members_delete_data(line)
+
                     serialized_line = serialize_dotted_path_dict(cleaned_flat_data)
                     serialized.append(serialized_line)
             # make sure there are no leftovers
@@ -144,6 +155,35 @@ def prepare_batch_data_lists(serialized_data):
         temp['body'] = json.dumps(data)
         operations.append(temp)
 
+    return {'operations': operations}
+
+def prepare_batch_data_delete_members(serialized_data):
+    """Prepare data for batch operation
+
+    When submitting batch operation, the data should contain the target for the
+    request (the template), a request method and the payload. This function
+    copies the data into the template for each datadict
+
+    Args:
+        template (dict): common data for all operations (method, path)
+        serialized_data (lists): a list structures (dicts) containing the
+            payload
+
+    """
+    template = {
+        'method': 'DELETE',
+        'path': '/lists/{list_id}/members/{subscriber_hash}',
+        'operation_id': None
+    }
+    operations = []
+
+    for data in serialized_data:
+        temp = template.copy()
+        temp['path'] = temp['path'].format(
+            list_id=data.pop('list_id'),
+            subscriber_hash=data.pop('subscriber_hash'))
+        temp['operation_id'] = data['email_address']
+        operations.append(temp)
     return {'operations': operations}
 
 def prepare_batch_data_update_members(serialized_data):

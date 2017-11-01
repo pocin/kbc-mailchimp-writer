@@ -52,7 +52,7 @@ def test_creating_lists_returns_empty_dict_if_not_custom_ids(client):
     assert lists == {}
 
 
-def test_running_app_catches_http_error_as_app_error(monkeypatch):
+def test_running_app_catches_http_error_as_user_error(monkeypatch):
     def failing_setup(*args, **kwargs):
         # is an application error
         raise requests.HTTPError("Some requests error")
@@ -60,7 +60,7 @@ def test_running_app_catches_http_error_as_app_error(monkeypatch):
     monkeypatch.setattr('mcwriter.writer.set_up', failing_setup)
     with pytest.raises(SystemExit) as excinfo:
         mcwriter.writer.run()
-    assert excinfo.value.code == 2
+    assert excinfo.value.code == 1
 
 
 def test_running_app_catches_generic_exception_as_app_eror(monkeypatch):

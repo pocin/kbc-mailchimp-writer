@@ -57,8 +57,10 @@ def clean_and_validate_lists_data(one_list):
         one_list = cleaning_procedure(one_list, fields)
     return one_list
 
+def _hash_email(email):
+    return md5(bytes(email, 'utf-8')).hexdigest()
 
-def clean_and_validate_members_data(one_list):
+def clean_and_validate_members_data(line):
     logging.debug("Cleaning members data")
     for cleaning_procedure, fields in (
             (_clean_exclusive_fields, members_exclusive_fields),
@@ -67,11 +69,17 @@ def clean_and_validate_members_data(one_list):
             (_clean_mandatory_bool_fields, members_mandatory_bool_fields),
             (_clean_mandatory_str_fields, members_mandatory_str_fields),
             (_clean_optional_custom_fields, members_optional_custom_fields)):
-        one_list = cleaning_procedure(one_list, fields)
-    one_list = _clean_members_interests(one_list)
-    md5hash = md5(bytes(one_list['email_address'], 'utf-8')).hexdigest()
-    one_list['subscriber_hash'] = md5hash
-    return one_list
+        line = cleaning_procedure(line, fields)
+    line = _clean_members_interests(line)
+    line['subscriber_hash'] = _hash_email(line['email_address'])
+    return line
+
+def clean_and_validate_members_delete_data(line):
+    logging.debug("Cleaning members data for deleting")
+    line = _clean_mandatory_str_fields(line, ['list_id', 'email_address'])
+    line['subscriber_hash'] = _hash_email(line['email_address'])
+    return line
+
 
 def clean_and_validate_tags_data(one_tag):
     logging.debug("Cleaning tags data")
