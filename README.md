@@ -31,6 +31,8 @@ The writer enables:
 
 5. Updating details of existing email addresses within mailing list
 
+6. Deleting members of mailing list
+
 **The tables you provide determine the writer's behavior**. See below for the
 actual table structures, [See here for actual examples](templates). 
 For the sake of clarity, the **input tablenames are hardcoded** and you can't change that.
@@ -138,3 +140,10 @@ Use column `list_id` in the `add_members.csv` input table to specify the list (f
 ### Updating members
 apart from `list_id` and `email_address` there are no mandatory fields. Just update those you want, the remaining ones will be left intact
 See [documentation](https://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/#edit-patch_lists_list_id_members_subscriber_hash) for reference on different columns
+
+### Deleting members
+upload a `/data/in/tables/delete_members.csv` file with the following contents
+```
+list_id,email_address
+abc1234,foo@example.com
+```
