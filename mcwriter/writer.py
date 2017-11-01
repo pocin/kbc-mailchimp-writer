@@ -228,9 +228,11 @@ def delete_members(client, csv_members):
     running_batches = []
     completed_batches = []
     logging.info("Adding members to list as described in %s", csv_members)
+    processed = 0
     for serialized_data in serialize_members_input(csv_members, action='delete'):
         no_members = len(serialized_data)
-        logging.info("Detected %s members to be added in a chunk.", no_members)
+        processed += no_members
+        logging.info("So far processed %s rows", processed)
 
         if len(running_batches) >= 480:
             # mailchimp limit is 500 running batches

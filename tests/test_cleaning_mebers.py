@@ -68,7 +68,7 @@ def test_cleaning_members_data_all_options_succeeds():
         'language': 'en',
         'interests__abc1234': True,
         'interests__abc1235': False,
-        'subscriber_hash': '582b00d27bcf92a600f0d5e0f12be026'}
+        'subscriber_hash': 'd3c17ef52c397921a87c1de66f2311c2'}
 
     assert clean_and_validate_members_data(data) == expected
 

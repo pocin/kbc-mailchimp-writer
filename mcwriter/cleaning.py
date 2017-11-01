@@ -58,7 +58,7 @@ def clean_and_validate_lists_data(one_list):
     return one_list
 
 def _hash_email(email):
-    return md5(bytes(email, 'utf-8')).hexdigest()
+    return md5(bytes(email.lower(), 'utf-8')).hexdigest()
 
 def clean_and_validate_members_data(line):
     logging.debug("Cleaning members data")
