@@ -4,6 +4,7 @@
 """
 from collections import defaultdict
 import csv
+import os
 import json
 import time
 import logging
@@ -310,7 +311,7 @@ def wait_for_batch_to_finish(client, batch_id, api_delay=BATCH_POLLING_DELAY):
                      batch_status['finished_operations'])
         return batch_status
 
-def write_batches_to_csv(batches, outpath):
+def write_batches_to_csv(batches, outpath, bucketname='in.c-mailchimp-writer'):
     fieldnames = [col for col in batches[0].keys() if col != '_links']
     with open(outpath, 'w') as f:
         writer = csv.DictWriter(f, fieldnames)
@@ -318,4 +319,10 @@ def write_batches_to_csv(batches, outpath):
         for batch in batches:
             del batch['_links']
             writer.writerow(batch)
-    return outpath
+    manifest = {
+        'destination': bucketname + '.' + os.path.splitext(os.path.basename(outpath))[0]
+    }
+    manipath = outpath+'.manifest',
+    with open(manipath, 'w') as f:
+        json.dump(manifest, f)
+    return outpath, manipath
