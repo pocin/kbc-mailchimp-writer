@@ -15,7 +15,7 @@ from .cleaning import (clean_and_validate_lists_data,
                        clean_and_validate_members_delete_data,
                        clean_and_validate_tags_data)
 from .exceptions import CleaningError, ConfigError, MissingFieldError
-BATCH_POLLING_DELAY = 5 #seconds
+BATCH_POLLING_DELAY = 10 #seconds
 CHUNK_SIZE = 500 #rows
 
 def serialize_dotted_path_dict(cleaned_flat_data, delimiter='__'):
@@ -299,7 +299,6 @@ def wait_for_batch_to_finish(client, batch_id, api_delay=BATCH_POLLING_DELAY):
     while batch_still_pending(batch_status):
         batch_status = client.batches.get(batch_id)
         time.sleep(api_delay)
-        api_delay *= 1.5
     else:
         logging.info("Batch %s finished.\n"
                      "total_operations: %s\n"
@@ -322,7 +321,7 @@ def write_batches_to_csv(batches, outpath, bucketname='in.c-mailchimp-writer'):
     manifest = {
         'destination': bucketname + '.' + os.path.splitext(os.path.basename(outpath))[0]
     }
-    manipath = outpath+'.manifest',
+    manipath = outpath+'.manifest'
     with open(manipath, 'w') as f:
         json.dump(manifest, f)
     return outpath, manipath

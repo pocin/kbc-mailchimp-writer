@@ -1,6 +1,6 @@
 import pytest
 import time
-from mcwriter.writer import update_members, delete_members
+from mcwriter.writer import update_members, delete_members, add_members_to_lists
 from mailchimp3 import MailChimp
 import requests
 import os
@@ -14,6 +14,20 @@ TEST_EMAIL_HASH = md5(TEST_EMAIL.encode('utf-8')).hexdigest()
 def client():
     yield MailChimp('', os.getenv("MC_TEST_APIKEY"))
 
+def test_adding_members_batch(client, tmpdir):
+    now = str(time.time())
+    csv = tmpdir.join('update_members.csv')
+    csv.write("""list_id,email_address,merge_fields__UPD_BATCH,status,status_if_new
+{list_id},{email},{upd_value},subscribed,subscribed""".format(
+        list_id=TEST_LIST_ID,
+        email=TEST_EMAIL,
+        upd_value=now))
+    add_members_to_lists(client, csv.strpath, batch=True)
+
+    updated = client.lists.members.get(list_id=TEST_LIST_ID, subscriber_hash=TEST_EMAIL_HASH)
+    current_value = updated['merge_fields']['UPD_BATCH']
+
+    assert current_value == now
 
 
 def test_updating_members_batch(client, tmpdir):

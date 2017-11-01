@@ -230,44 +230,12 @@ def delete_members(client, csv_members):
     parse data from csv (csv_members arugment)
     """
 
-    running_batches = []
-    completed_batches = []
-    logging.info("Deleting members as described in %s", csv_members)
-    processed = 0
-    for serialized_data in serialize_members_input(csv_members, action='delete'):
-        no_members = len(serialized_data)
-        processed += no_members
-        logging.info("So far processed %s rows", processed)
-
-        if len(running_batches) >= 480:
-            # mailchimp limit is 500 running batches
-            # It's not the most effective in the world, but I dont fell like
-            # messing around with threads and stuff
-            # so we just wait for one particular job to finish
-            # while others might finish as well
-            logging.info("There are %s running batch jobs. We need to wait"
-                            "for some of them to finish before submitting new one",
-                            len(running_batches))
-            wait_for_this_batch = running_batches.pop(0)
-            batch_status = wait_for_batch_to_finish(
-                client,
-                batch_id=wait_for_this_batch['id'],
-                api_delay=BATCH_WAIT_DELAY)
-            completed_batches.append(batch_status)
-        batch_response = _delete_members_in_batch(client, serialized_data)
-        logging.info("Batch job request sent")
-        running_batches.append(batch_response)
-        time.sleep(BATCH_DELAY)
-
-    # processed_batches = []
-    logging.info("Waiting for batches to finish.")
-    for batch_response in running_batches:
-        # Wait untill all batches are finished
-        batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
-                                                api_delay=SEQUENTIAL_REQUEST_DELAY)
-        completed_batches.append(batch_status)
-    return completed_batches
-
+    batches = _do_members_action_and_wait_for_batch(client,
+                                          csv_members,
+                                          action='delete',
+                                          batch_action=_delete_members_in_batch,
+                                          batch=True)
+    return batches
 
 def update_members(client, csv_members, batch=None):
     """
@@ -275,18 +243,34 @@ def update_members(client, csv_members, batch=None):
 
     parse data from csv (csv_members arugment)
     """
+    logging.info("Updating members to list as described in %s", csv_members)
+    batches = _do_members_action_and_wait_for_batch(client,
+                                          csv_members,
+                                          action='update',
+                                          batch_action=_update_members_in_batch,
+                                          serial_action=_update_members_serial)
 
+    return batches
+
+def _do_members_action_and_wait_for_batch(client,
+                                          csv_members,
+                                          action,
+                                          batch_action,
+                                          serial_action=None,
+                                          batch=None,
+                                          created_lists=None):
     running_batches = []
     completed_batches = []
     processed = 0
-    logging.info("Adding members to list as described in %s", csv_members)
-    for serialized_data in serialize_members_input(csv_members, action='update'):
+    for serialized_data in serialize_members_input(csv_members,
+                                                   action=action,
+                                                   created_lists=created_lists):
         no_members = len(serialized_data)
         processed += no_members
         logging.info("So far processed %s rows", processed)
 
-        if no_members <= BATCH_THRESHOLD and (batch is None or batch is False):
-            _update_members_serial(client, serialized_data)
+        if no_members <= BATCH_THRESHOLD and (batch is None or batch is False) and callable(serial_action):
+            serial_action(client, serialized_data)
         else:
             logging.info("Batch job request sent")
             if len(running_batches) >= 480:
@@ -304,65 +288,33 @@ def update_members(client, csv_members, batch=None):
                     batch_id=wait_for_this_batch['id'],
                     api_delay=BATCH_WAIT_DELAY)
                 completed_batches.append(batch_status)
-            batch_response = _update_members_in_batch(client, serialized_data)
+            batch_response = batch_action(client, serialized_data)
             running_batches.append(batch_response)
             time.sleep(BATCH_DELAY)
 
     # processed_batches = []
     logging.info("Waiting for batches to finish.")
-    for batch_response in running_batches:
+    while running_batches:
+        batch_response = running_batches.pop()
+        # batch_response in running_batches:
         # Wait untill all batches are finished
         batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
                                                 api_delay=SEQUENTIAL_REQUEST_DELAY)
         completed_batches.append(batch_status)
     return completed_batches
-
 
 def add_members_to_lists(client, csv_members, batch=None, created_lists=None):
     """Add members to list. Update if they are already there.
 
     Parse data from csv (default /data/in/tables/add_members.csv)
     """
-    running_batches = []
-    completed_batches = []
-    processed = 0
-    logging.info("Adding members to list as described in %s", csv_members)
-    for serialized_data in serialize_members_input(csv_members, action='add_or_update', created_lists=created_lists):
-        no_members = len(serialized_data)
-        processed += no_members
-        logging.info("So far processed %s rows", processed)
-
-        if no_members <= BATCH_THRESHOLD and (batch is None or batch is False):
-            _add_members_serial(client, serialized_data)
-        else:
-            logging.info("Batch job request sent")
-            if len(running_batches) >= 480:
-                # mailchimp limit is 500 running batches
-                # It's not the most effective in the world, but I dont fell like
-                # messing around with threads and stuff
-                # so we just wait for one particular job to finish
-                # while others might finish as well
-                logging.info("There are %s running batch jobs. We need to wait"
-                             "for some of them to finish before submitting new one",
-                             len(running_batches))
-                wait_for_this_batch = running_batches.pop(0)
-                batch_status = wait_for_batch_to_finish(
-                    client,
-                    batch_id=wait_for_this_batch['id'],
-                    api_delay=BATCH_WAIT_DELAY)
-                completed_batches.append(batch_status)
-            batch_response = _add_members_in_batch(client, serialized_data)
-            running_batches.append(batch_response)
-            time.sleep(BATCH_DELAY)
-
-    # processed_batches = []
-    logging.info("Waiting for batches to finish.")
-    for batch_response in running_batches:
-        # Wait untill all batches are finished
-        batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
-                                                api_delay=SEQUENTIAL_REQUEST_DELAY)
-        completed_batches.append(batch_status)
-    return completed_batches
+    batches = _do_members_action_and_wait_for_batch(client,
+                                                    csv_members,
+                                                    action='add_or_update',
+                                                    created_lists=created_lists,
+                                                    serial_action=_add_members_serial,
+                                                    batch_action=_add_members_in_batch)
+    return batches
 
 
 def create_tags(client, csv_tags, created_lists=None):
