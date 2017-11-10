@@ -1,5 +1,8 @@
 **/*.ipynb
-tests/env.sh
+tests
 **/config.json
 **/.ipynb_checkpoints
+**/__pycache__
+**/.cache
+**/.DS_Store
 .git
