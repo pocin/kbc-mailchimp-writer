@@ -90,7 +90,7 @@ def _create_lists_serial(client, serialized_data):
                 created_lists[custom_id] = resp['id']
             time.sleep(SEQUENTIAL_REQUEST_DELAY)
         except HTTPError as exc:
-            err_resp = json.loads(exc.response.text)
+            err_resp = exc.response.json()
             logging.error("Error while creating request:\n"
                           "POST data:\n%s"
                           "Error message\n%s", data, err_resp)
@@ -132,7 +132,7 @@ def _update_lists_serial(client, serialized_data):
         try:
             client.lists.update(list_id=list_id, data=data)
         except HTTPError as exc:
-            err_resp = json.loads(exc.response.text)
+            err_resp = exc.response.json()
             logging.error("Error while creating request:\n"
                           "POST data:\n%s"
                           "Error message\n%s", data, err_resp)
@@ -151,7 +151,7 @@ def _update_members_serial(client, serialized_data):
                                         list_id=data.pop('list_id'),
                                         subscriber_hash=data.pop('subscriber_hash'))
         except HTTPError as exc:
-            err_resp = json.loads(exc.response.text)
+            err_resp = exc.response.json()
             logging.error("Error while creating request:\n"
                           "POST data:\n%s\n"
                           "Error message\n%s", data, err_resp)
@@ -168,7 +168,7 @@ def _update_members_in_batch(client, serialized_data):
         batch_response = client.batches.create(data=operations)
         logging.debug("Got batch response: %s", batch_response)
     except HTTPError as exc:
-        err_resp = json.loads(exc.response.text)
+        err_resp = exc.response.json()
         logging.error("Error while creating batch request:\n%s\nAborting.", err_resp)
         raise
     else:
@@ -184,7 +184,7 @@ def _delete_members_in_batch(client, serialized_data):
         batch_response = client.batches.create(data=operations)
         logging.debug("Got batch response: %s", batch_response)
     except HTTPError as exc:
-        err_resp = json.loads(exc.response.text)
+        err_resp = exc.response.json()
         logging.error("Error while creating batch request:\n%s\nAborting.", err_resp)
         raise
     else:
@@ -199,7 +199,7 @@ def _add_members_serial(client, serialized_data):
                                                   list_id=data.pop('list_id'),
                                                   subscriber_hash=data.pop('subscriber_hash'))
         except HTTPError as exc:
-            err_resp = json.loads(exc.response.text)
+            err_resp = exc.response.json()
             logging.error("Error while creating request:\n"
                           "POST data:\n%s\n"
                           "Error message\n%s", data, err_resp)
@@ -216,7 +216,7 @@ def _add_members_in_batch(client, serialized_data):
         batch_response = client.batches.create(data=operations)
         logging.debug("Got batch response: %s", batch_response)
     except HTTPError as exc:
-        err_resp = json.loads(exc.response.text)
+        err_resp = exc.response.json()
         logging.error("Error while creating batch request:\n%s\nAborting.", err_resp)
         raise
     else:
@@ -273,7 +273,6 @@ def _do_members_action_and_wait_for_batch(client,
         if no_members <= BATCH_THRESHOLD and (batch is None or batch is False) and callable(serial_action):
             serial_action(client, serialized_data)
         else:
-            logging.info("Batch job request sent")
             if len(running_batches) >= 480:
                 # mailchimp limit is 500 running batches
                 # It's not the most effective in the world, but I dont fell like
@@ -290,6 +289,7 @@ def _do_members_action_and_wait_for_batch(client,
                     api_delay=BATCH_WAIT_DELAY)
                 completed_batches.append(batch_status)
             batch_response = batch_action(client, serialized_data)
+            logging.info("Batch job request sent %s", batch_response.json())
             running_batches.append(batch_response)
             time.sleep(BATCH_DELAY)
 
