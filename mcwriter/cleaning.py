@@ -19,7 +19,7 @@ lists_optional_bool_fields = ("use_archive_bar", )
 lists_optional_custom_fields = {"visibility": ['pub', 'prv']}
 lists_exclusive_fields = set(('list_id', 'custom_id'))
 # fields for adding members
-members_mandatory_str_fields = ('email_address', 'list_id')
+members_mandatory_str_fields = ['email_address', 'list_id']
 members_optional_custom_fields = {"status": ['subscribed', 'unsubscribed',
                                               'cleaned', 'pending',
                                               'transactional'],
@@ -60,7 +60,9 @@ def clean_and_validate_lists_data(one_list):
 def _hash_email(email):
     return md5(bytes(email.lower(), 'utf-8')).hexdigest()
 
-def clean_and_validate_members_data(line):
+
+def clean_and_validate_members_update_data(line):
+    """For cleaning """
     logging.debug("Cleaning members data")
     for cleaning_procedure, fields in (
             (_clean_exclusive_fields, members_exclusive_fields),
@@ -73,6 +75,15 @@ def clean_and_validate_members_data(line):
     line = _clean_members_interests(line)
     line['subscriber_hash'] = _hash_email(line['email_address'])
     return line
+
+def clean_and_validate_members_data(line):
+    """For cleaning add_or_update data"""
+    line = clean_and_validate_members_update_data(line)
+    if 'status_if_new' not in line.keys():
+        raise MissingFieldError(
+            "when adding members you must provide 'status_if_new' and optionally status field")
+    return line
+
 
 def clean_and_validate_members_delete_data(line):
     logging.debug("Cleaning members data for deleting")

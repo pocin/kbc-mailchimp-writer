@@ -115,6 +115,18 @@ def test_cleaning_members_data_all_options_raises_on_missing_email():
     with pytest.raises(MissingFieldError):
         clean_and_validate_members_data(data)
 
+def test_cleaning_members_data_all_options_raises_on_missing_status():
+    data = {
+        'vip': 'true',
+        'email_address': 'foo@bar.cz',
+        'email_type': 'true',
+        'language': 'en',
+        'interests__abc1234': 'true',
+        'list_id': 'foo'
+        }
+
+    with pytest.raises(MissingFieldError):
+        clean_and_validate_members_data(data)
 
 def test_cleaning_members_interests_cleans_ok():
     data = {

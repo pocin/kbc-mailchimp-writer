@@ -164,6 +164,14 @@ def test_preparing_batch_data_for_delete():
     prepared = prepare_batch_data_delete_members(serialized_data)
     assert prepared == expected
 
+def test_preparing_batch_data_for_update():
+    serialized_data = [
+        {'list_id': 'foo',
+         'subscriber_hash': 'bar',
+         'email_address': 'xyz@qux.com',
+         'status_if_new': 'pending'}
+    ]
+    prepare_batch_data_add_members
 def test_serializing_members_input(new_members_csv):
     serialized = serialize_members_input(new_members_csv.name, action='add_or_update', chunk_size=1)
     first_chunk = next(serialized)
@@ -235,29 +243,30 @@ def test_serializing_members_input_linked_to_lists(new_members_csv_linked_to_lis
     assert first_chunk == expected
 
 
-def test_preparing_batch_members_data():
+def test_preparing_batch_members_data_adding_members():
     data = [{'foo':'bar', 'email_address': 'foo@barbar.cz',
              'list_id':'ab1234', 'subscriber_hash': 'foobar',
              'status_if_new': 'subscribed'},
             {'foo':'bar2', 'email_address': 'foo@bar.cz',
              'list_id':'ab1234', 'subscriber_hash': 'foobar',
-             'status_if_new': 'subscribed'}]
+             'status': 'subscribed'}]
 
     batch_data = prepare_batch_data_add_members(data)
 
     expected = {'operations': [
         {'method': 'PUT',
          'path': '/lists/ab1234/members/foobar',
-         'operation_id': 'foo@barbar.cz',
-         'status_if_new': 'subscribed',
-         'body': json.dumps({'foo':'bar', 'email_address': 'foo@barbar.cz'})},
+         'operation_id': 'foobar',
+         'body': json.dumps({'foo':'bar',
+                             'email_address': 'foo@barbar.cz',
+                             'status_if_new': 'subscribed'})},
         {'method': 'PUT',
          'path': '/lists/ab1234/members/foobar',
-         'operation_id': 'foo@bar.cz',
-         'status_if_new': 'subscribed',
-         'body': json.dumps({'foo':'bar2', 'email_address': 'foo@bar.cz'})}
+         'operation_id': 'foobar',
+         'body': json.dumps({'foo':'bar2', 'email_address': 'foo@bar.cz', 'status': 'subscribed'})}
     ]}
     assert batch_data == expected
+
 
 def test_setting_up_client_works(monkeypatch):
     params = {'#apikey': 'secret'}

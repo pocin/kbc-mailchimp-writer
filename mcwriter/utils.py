@@ -13,6 +13,7 @@ from requests import HTTPError, ConnectionError
 from .cleaning import (clean_and_validate_lists_data,
                        clean_and_validate_members_data,
                        clean_and_validate_members_delete_data,
+                       clean_and_validate_members_update_data,
                        clean_and_validate_tags_data)
 from .exceptions import CleaningError, ConfigError, MissingFieldError
 BATCH_POLLING_DELAY = 10 #seconds
@@ -92,8 +93,10 @@ def serialize_members_input(path, action, created_lists=None, chunk_size=CHUNK_S
                     if created_lists:
                         mailchimp_list_id = created_lists[line.pop('custom_list_id')]
                         line['list_id'] = mailchimp_list_id
-                    if action in {'add_or_update', 'update'}:
+                    if action == 'add_or_update':
                         cleaned_flat_data = clean_and_validate_members_data(line)
+                    elif action == 'update':
+                        cleaned_flat_data = clean_and_validate_members_update_data(line)
                     else:
                         # it's delete
                         cleaned_flat_data = clean_and_validate_members_delete_data(line)
