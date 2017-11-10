@@ -180,9 +180,10 @@ def prepare_batch_data_delete_members(serialized_data):
 
     for data in serialized_data:
         temp = template.copy()
+        sub_hash = data.pop('subscriber_hash')
         temp['path'] = temp['path'].format(
             list_id=data.pop('list_id'),
-            subscriber_hash=data.pop('subscriber_hash'))
+            subscriber_hash=sub_hash)
         temp['operation_id'] = data['email_address']
         operations.append(temp)
     return {'operations': operations}
@@ -209,9 +210,10 @@ def prepare_batch_data_update_members(serialized_data):
 
     for data in serialized_data:
         temp = template.copy()
+        sub_hash = data.pop('subscriber_hash')
         temp['path'] = temp['path'].format(
             list_id=data.pop('list_id'),
-            subscriber_hash=data.pop('subscriber_hash'))
+            subscriber_hash=sub_hash)
         temp['operation_id'] = data['email_address']
         temp['body'] = json.dumps(data)
         operations.append(temp)
@@ -235,17 +237,16 @@ def prepare_batch_data_add_members(serialized_data):
         'method': 'PUT',
         'path': '/lists/{list_id}/members/{subscriber_hash}',
         'operation_id': None,
-        'status_if_new': None,
         'body': None}
     operations = []
 
     for data in serialized_data:
         temp = template.copy()
+        sub_hash = data.pop('subscriber_hash')
         temp['path'] = temp['path'].format(
             list_id=data.pop('list_id'),
-            subscriber_hash=data.pop('subscriber_hash'))
-        temp['operation_id'] = data['email_address']
-        temp['status_if_new'] = data.pop('status_if_new')
+            subscriber_hash=sub_hash )
+        temp['operation_id'] = sub_hash
         temp['body'] = json.dumps(data)
         operations.append(temp)
 
