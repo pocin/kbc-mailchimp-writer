@@ -122,7 +122,7 @@ present and the `vip` column is not defined in the input table.
     "status_if_new", #*string; one of ["subscribed", "unsubscribed", "cleaned", "pending", "transactional"]
                      # Defineds which status will be assigned to existing email addressess
     "email_address", #*string
-    "status", #*string one of ["subscribed", "unsubscribed", "cleaned", "pending", "transactional"]
+    "status", #string one of ["subscribed", "unsubscribed", "cleaned", "pending", "transactional"]
     "interests__{interest_id}", #boolean
     "merge_fields__{merge_tag}", #str (see merge tags mailchimp cheatsheet)
     "language", #string
