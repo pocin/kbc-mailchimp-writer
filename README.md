@@ -48,7 +48,11 @@ For the sake of clarity, the **input tablenames are hardcoded** and you can't ch
 
 - Fields marked with `*` (below) are mandatory
 - You can completely left out the non-mandatory columns from the csv.
-- Boolean values must be either `true` or `false` (empty string is treated as `false`).
+- Boolean values must be either `true` or `false` (empty string is treated as `false**).
+
+The operations are processed in batches. One batch is max 500 records (actions). The mailchimp api limit's the number of total running (queued) batches to 500. If you are hitting the limits let me know and I will make the batch size a config parameter. 
+All batch operations results are written to a table `in.c-mailchimp-writer`. Each row in the tables there has a batch id and some basic stats. If you need details for each batch operation, see this: https://developer.mailchimp.com/documentation/mailchimp/guides/how-to-use-batch-operations/
+
 
 ## Creation of new mailing lists
 [According to the mailchimp v3 API](http://developer.mailchimp.com/documentation/mailchimp/reference/lists/#create-post_lists),
