@@ -322,10 +322,4 @@ def write_batches_to_csv(batches, outpath, bucketname='in.c-mailchimp-writer'):
         for batch in batches:
             del batch['_links']
             writer.writerow(batch)
-    manifest = {
-        'destination': bucketname + '.' + os.path.splitext(os.path.basename(outpath))[0]
-    }
-    manipath = outpath+'.manifest'
-    with open(manipath, 'w') as f:
-        json.dump(manifest, f)
-    return outpath, manipath
+    return outpath

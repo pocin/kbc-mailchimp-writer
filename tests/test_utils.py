@@ -372,7 +372,7 @@ def test_writing_batches_csv(tmpdir):
                 'submitted_at': '2017-11-01T10:00:49+00:00',
                 'total_operations': 500}
     ]
-    outpath, manipath = write_batches_to_csv(batches, outpath.strpath)
+    outpath = write_batches_to_csv(batches, outpath.strpath)
 
     with open(outpath, 'r') as f:
         assert len(f.readlines()) == 3
@@ -380,6 +380,3 @@ def test_writing_batches_csv(tmpdir):
         reader = csv.DictReader(f)
         assert '_links' not in reader.fieldnames
         assert 'id' in reader.fieldnames
-    with open(manipath, 'r') as f:
-        manifest = json.load(f)
-        assert manifest['destination'].split('.')[2] == outpath.split('/')[-1].split('.')[0]

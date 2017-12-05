@@ -289,7 +289,7 @@ def _do_members_action_and_wait_for_batch(client,
                     api_delay=BATCH_WAIT_DELAY)
                 completed_batches.append(batch_status)
             batch_response = batch_action(client, serialized_data)
-            logging.info("Batch job request sent %s", batch_response.json())
+            logging.info("Batch job request sent %s", batch_response)
             running_batches.append(batch_response)
             time.sleep(BATCH_DELAY)
 
@@ -390,8 +390,6 @@ def run_writer(client, params, tables, datadir):
     path_add_tags = os.path.join(datadir, 'in/tables', FILE_ADD_TAGS)
     path_delete_members = os.path.join(datadir, 'in/tables', FILE_DELETE_MEMBERS)
 
-    outbucket = params.get('results_bucket', 'in.c-mailchimp-writer')
-
     created_lists = {}
     #1. update_lists.csv
     #2. new_lists.csv
@@ -409,17 +407,16 @@ def run_writer(client, params, tables, datadir):
         create_tags(client, csv_tags=path_add_tags, created_lists=created_lists)
     if path_add_members in tablenames:
         batches = add_members_to_lists(client=client, csv_members=path_add_members,
-                             created_lists=created_lists)
+                                       created_lists=created_lists)
         if batches:
-            write_batches_to_csv(batches, PATH_OUT_BATCHES_ADD, bucketname=outbucket)
+            write_batches_to_csv(batches, PATH_OUT_BATCHES_ADD)
     if path_update_members in tablenames:
         batches = update_members(client, csv_members=path_update_members)
         if batches:
-            write_batches_to_csv(batches, PATH_OUT_BATCHES_UPDATE, bucketname=outbucket)
+            write_batches_to_csv(batches, PATH_OUT_BATCHES_UPDATE)
 
     if path_delete_members in tablenames:
         batches = delete_members(client, csv_members=path_delete_members)
         if batches:
-            write_batches_to_csv(batches, PATH_OUT_BATCHES_DELETE, bucketname=outbucket)
+            write_batches_to_csv(batches, PATH_OUT_BATCHES_DELETE)
     logging.info("Writer finished")
-
