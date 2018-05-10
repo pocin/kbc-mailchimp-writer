@@ -1,8 +1,10 @@
 **/*.ipynb
-tests
+**/tests/**
 **/config.json
-**/.ipynb_checkpoints
-**/__pycache__
-**/.cache
+.ipynb_checkpoints
+**/*.ipynb
+__pycache__
+.cache
+tests
 **/.DS_Store
 .git
