@@ -13,7 +13,7 @@ import time
 import traceback
 import os
 from keboola import docker
-from requests import HTTPError
+from requests import HTTPError, RequestException
 from .exceptions import UserError, ConfigError
 from .utils import (serialize_lists_input,
                     serialize_members_input,
@@ -346,7 +346,7 @@ def run():
         datadir = os.getenv("KBC_DATADIR")
         client, params, tables = set_up(path_config=datadir)
         run_writer(client, params, tables, datadir=datadir)
-    except (UserError, HTTPError) as err:
+    except (UserError, RequestException) as err:
         print(err, file=sys.stderr)
         sys.exit(1)
     except Exception as err:
