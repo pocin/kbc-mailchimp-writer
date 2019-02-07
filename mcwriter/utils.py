@@ -296,12 +296,29 @@ def batch_still_pending(batch_response):
     else:
         return True
 
+def _retry_get_batch_status(client, batch_id, retries=5, delay=5):
+    """Can't use requests.Session retry mechanism because
+    the underlying client doesn't use it"""
+    try:
+        return client.batches.get(batch_id)
+    except ConnectionError as err:
+        if retries <= 0:
+            raise
+        else:
+            logging.info(err)
+            logging.info("Retrying attempt", retries)
+            time.sleep(delay)
+            return _retry_get_batch_status(client=client,
+                                           batch_id=batch_id,
+                                           retries=retries-1,
+                                           delay=delay)
+
 
 def wait_for_batch_to_finish(client, batch_id, api_delay=BATCH_POLLING_DELAY):
-    batch_status = client.batches.get(batch_id)
+    batch_status = _retry_get_batch_status(client, batch_id)
     logging.info("Waiting for batch operation %s to finish", batch_id)
     while batch_still_pending(batch_status):
-        batch_status = client.batches.get(batch_id)
+        batch_status = _retry_get_batch_status(client, batch_id)
         time.sleep(api_delay)
     else:
         logging.info("Batch %s finished.\n"
