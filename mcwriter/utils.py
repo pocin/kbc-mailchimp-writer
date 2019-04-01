@@ -32,12 +32,17 @@ def serialize_dotted_path_dict(cleaned_flat_data, delimiter='__'):
     Returns:
         A nested representation of the flat dict.
     """
-    serialized = defaultdict(dict)
+    serialized = defaultdict(lambda: defaultdict(dict))
 
     for key, value in cleaned_flat_data.items():
         if delimiter in key:
-            lvl1, lvl2 = key.split(delimiter, maxsplit=1)
-            serialized[lvl1][lvl2] = value
+            levels = key.split(delimiter)
+            if len(levels) == 2:
+                serialized[levels[0]][levels[1]] = value
+            elif len(levels) == 3:
+                serialized[levels[0]][levels[1]][levels[2]] = value
+            else:
+                raise ValueError("Can't nest dict deeper than 2 levels {!r}".format(cleaned_flat_data))
         else:
             serialized[key] = value
 

@@ -82,6 +82,22 @@ def test_serializing_nested_path():
     assert expected == serialized
 
 
+def test_serializing_2_levels_nested_path():
+    flat = {'name': 'Robin',
+            'merge_fields__ADDRESS__zip': '123',
+            'merge_fields__ADDRESS__country': 'Czechia',
+            'merge_fields__CONFIRM': True}
+    expected = {
+        'name': 'Robin',
+        'merge_fields': {
+            "ADDRESS": {
+                'zip': '123',
+                'country': 'Czechia'},
+            'CONFIRM': True}
+    }
+    serialized = serialize_dotted_path_dict(flat)
+    assert expected == serialized
+
 def test_serializing_new_lists_input_csv(new_lists_csv):
     # Fake inputs
     serialized = serialize_lists_input(new_lists_csv.name)
