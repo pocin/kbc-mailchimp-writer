@@ -12,6 +12,7 @@ from mailchimp3 import MailChimp
 from requests import HTTPError, ConnectionError
 from .cleaning import (clean_and_validate_lists_data,
                        clean_and_validate_members_data,
+                       _hash_email,
                        clean_and_validate_members_delete_data,
                        clean_and_validate_members_update_data,
                        clean_and_validate_tags_data)
@@ -64,6 +65,28 @@ def serialize_lists_input(path):
             serialized_line = serialize_dotted_path_dict(cleaned_flat_data)
             serialized.append(serialized_line)
     return serialized
+
+def serialize_add_member_tags_input(path, chunk_size=CHUNK_SIZE):
+    '''
+    '''
+
+    with open(path, 'r') as lists:
+        reader = csv.DictReader(lists)
+        while reader:
+            serialized = []
+            for _ in range(chunk_size):
+                try:
+                    line = next(reader)
+                except StopIteration:
+                    break
+                else:
+                    line['tags'] = json.loads(line['tags'])
+                    line['subscriber_hash'] = _hash_email(line.pop('email_address'))
+                    serialized.append(line)
+            # make sure there are no leftovers
+            if len(serialized) == 0:
+                raise StopIteration
+            yield serialized
 
 
 def serialize_members_input(path, action, created_lists=None, chunk_size=CHUNK_SIZE):
@@ -227,6 +250,25 @@ def prepare_batch_data_update_members(serialized_data):
         operations.append(temp)
     return {'operations': operations}
 
+def prepare_batch_data_add_member_tags(serialized_data):
+    template = {
+        'method': 'POST',
+        'path': '/lists/{list_id}/members/{subscriber_hash}/tags',
+        'operation_id': None,
+        'body': None}
+    operations = []
+
+    for data in serialized_data:
+        temp = template.copy()
+        sub_hash = data.pop('subscriber_hash')
+        temp['path'] = temp['path'].format(
+            list_id=data.pop('list_id'),
+            subscriber_hash=sub_hash)
+        temp['operation_id'] = sub_hash
+        temp['body'] = json.dumps(data)
+        operations.append(temp)
+
+    return {'operations': operations}
 
 def prepare_batch_data_add_members(serialized_data):
     """Prepare data for batch operation
@@ -253,7 +295,7 @@ def prepare_batch_data_add_members(serialized_data):
         sub_hash = data.pop('subscriber_hash')
         temp['path'] = temp['path'].format(
             list_id=data.pop('list_id'),
-            subscriber_hash=sub_hash )
+            subscriber_hash=sub_hash)
         temp['operation_id'] = sub_hash
         temp['body'] = json.dumps(data)
         operations.append(temp)

@@ -7,19 +7,25 @@ Keboola mailchimp writer
 import sys
 import logging
 import datetime
+from pathlib import Path
 import json
 import csv
 import time
 import traceback
+from pathlib import Path
 import os
 from keboola import docker
 from requests import HTTPError, RequestException
 from .exceptions import UserError, ConfigError
+from .cleaning import _hash_email
 from .utils import (serialize_lists_input,
                     serialize_members_input,
+                    serialize_add_member_tags_input,
                     serialize_tags_input,
                     prepare_batch_data_add_members,
+                    prepare_batch_data_add_member_tags,
                     prepare_batch_data_delete_members,
+                    prepare_batch_data_add_member_tags,
                     write_batches_to_csv,
                     prepare_batch_data_update_members,
                     _setup_client,
@@ -31,6 +37,7 @@ from .utils import (serialize_lists_input,
 FILE_NEW_LISTS = 'new_lists.csv'
 FILE_UPDATE_LISTS = 'update_lists.csv'
 FILE_ADD_MEMBERS = 'add_members.csv'
+FILE_ADD_MEMBER_TAGS = 'add_member_tags.csv'
 FILE_ADD_TAGS = 'add_tags.csv'
 FILE_DELETE_MEMBERS = 'delete_members.csv'
 FILE_UPDATE_MEMBERS = 'update_members.csv'
@@ -59,7 +66,7 @@ def set_up(path_config='/data/'):
     '''
     cfg = docker.Config(path_config)
     params = cfg.get_parameters()
-    tables = cfg.get_input_tables()
+    tables = [str(p) for p in Path(path_config).glob('in/tables/*.csv')]
     if params.get('debug'):
         logging.basicConfig(level=logging.DEBUG)
     else:
@@ -113,6 +120,46 @@ def create_lists(client, csv_lists):
     logging.info("New lists created.")
     return created_lists
 
+def add_member_tags(client, path):
+    running_batches = []
+    completed_batches = []
+    processed = 0
+    for chunk in serialize_add_member_tags_input(path):
+        batch_data = prepare_batch_data_add_member_tags(chunk)
+        no_members = len(batch_data)
+        processed += no_members
+        logging.info("So far processed %s rows", processed)
+
+        if len(running_batches) >= 480:
+            # mailchimp limit is 500 running batches
+            # It's not the most effective in the world, but I dont fell like
+            # messing around with threads and stuff
+            # so we just wait for one particular job to finish
+            # while others might finish as well
+            logging.info("There are %s running batch jobs. We need to wait"
+                            "for some of them to finish before submitting new one",
+                            len(running_batches))
+            wait_for_this_batch = running_batches.pop(0)
+            batch_status = wait_for_batch_to_finish(
+                client,
+                batch_id=wait_for_this_batch['id'],
+                api_delay=BATCH_WAIT_DELAY)
+            completed_batches.append(batch_status)
+        batch_response = _add_member_tags_in_batch(client, batch_data)
+        logging.info("Batch job request sent %s", batch_response)
+        running_batches.append(batch_response)
+        time.sleep(BATCH_DELAY)
+
+    # processed_batches = []
+    logging.info("Waiting for batches to finish.")
+    while running_batches:
+        batch_response = running_batches.pop()
+        # batch_response in running_batches:
+        # Wait untill all batches are finished
+        batch_status = wait_for_batch_to_finish(client, batch_id=batch_response['id'],
+                                                api_delay=SEQUENTIAL_REQUEST_DELAY)
+        completed_batches.append(batch_status)
+    return completed_batches
 
 def update_lists(client, csv_lists):
     """Update existing mailing lists
@@ -190,6 +237,21 @@ def _delete_members_in_batch(client, serialized_data):
     else:
         return batch_response  # should contain operation_id if we later need this
 
+def _add_member_tags_in_batch(client, batch_data):
+    operation_id = 'add_member_tags_{:%Y%m%d:%H-%M-%S}'.format(
+        datetime.datetime.now())
+    logging.debug('adding member tags in batch mode: operation_id %s',
+                  operation_id)
+    try:
+        batch_response = client.batches.create(data=batch_data)
+        logging.debug("Got batch response: %s", batch_response)
+    except HTTPError as exc:
+        err_resp = exc.response.text
+        logging.error("Error while creating batch request:\n%s\nAborting.", err_resp)
+        raise
+    else:
+        return batch_response  # should contain operation_id if we later need this
+
 def _add_members_serial(client, serialized_data):
     """Add members to list"""
     logging.debug('Adding members to lists in serial.')
@@ -221,6 +283,23 @@ def _add_members_in_batch(client, serialized_data):
         raise
     else:
         return batch_response  # should contain operation_id if we later need this
+
+def add_memebr_tags_in_batch(client, serialized_data):
+    operation_id = 'add_member_tags_{:%Y%m%d:%H-%M-%S}'.format(
+        datetime.datetime.now())
+    logging.debug('Adding members in batch mode: operation_id %s', operation_id)
+
+    operations = prepare_batch_data_add_member_tags(serialized_data)
+    try:
+        batch_response = client.batches.create(data=operations)
+        logging.debug("Got batch response: %s", batch_response)
+    except HTTPError as exc:
+        err_resp = exc.response.text
+        logging.error("Error while creating batch request:\n%s\nAborting.", err_resp)
+        raise
+    else:
+        return batch_response  # should contain operation_id if we later need this
+
 
 
 def delete_members(client, csv_members):
@@ -380,7 +459,7 @@ def run_writer(client, params, tables, datadir):
     """
 
     logging.debug("Running writer")
-    tablenames = [t['full_path'] for t in tables]
+    tablenames = tables
 
     logging.debug("Got tablenames %s", tablenames)
     path_update_lists = os.path.join(datadir, 'in/tables', FILE_UPDATE_LISTS)
@@ -389,6 +468,7 @@ def run_writer(client, params, tables, datadir):
     path_update_members = os.path.join(datadir, 'in/tables', FILE_UPDATE_MEMBERS)
     path_add_tags = os.path.join(datadir, 'in/tables', FILE_ADD_TAGS)
     path_delete_members = os.path.join(datadir, 'in/tables', FILE_DELETE_MEMBERS)
+    path_add_member_tags = os.path.join(datadir, 'in/tables', FILE_ADD_MEMBER_TAGS)
 
     created_lists = {}
     #1. update_lists.csv
@@ -399,6 +479,8 @@ def run_writer(client, params, tables, datadir):
     if len(tablenames) == 0:
         raise ConfigError("No input tables specified!")
 
+    if path_add_member_tags in tablenames:
+        add_member_tags(client, path_add_member_tags)
     if path_update_lists in tablenames:
         update_lists(client, csv_lists=path_update_lists)
     if path_new_lists in tablenames:

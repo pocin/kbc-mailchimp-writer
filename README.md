@@ -151,3 +151,15 @@ upload a `/data/in/tables/delete_members.csv` file with the following contents
 list_id,email_address
 abc1234,foo@example.com
 ```
+
+### Adding tags to subscribers
+https://developer.mailchimp.com/documentation/mailchimp/reference/lists/members/tags/#%20
+
+`in/tables/add_member_tags.csv`
+
+```csv
+list_id,email_address,tags
+abc1234,foo@example.com,"[{""name"": ""test-tag"", ""status"":""active""}]"
+```
+"[{"name": "test-tag", "status":"active"}]"
+would create a tag `test-tag`. Use `"status": "inactive"` to remove it
